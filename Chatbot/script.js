@@ -1,34 +1,53 @@
 document.addEventListener('DOMContentLoaded', () => {
     const promptInput = document.getElementById('prompt-input');
-    const mainChat = document.getElementById('main-chat');
     const promptSection = document.getElementById('prompt-section');
     const chatView = document.getElementById('chat-view');
-
-    promptInput.addEventListener('focus', () => {
-        // Add the typing-active class when the input is focused
-        mainChat.classList.add('typing-active');
-    });
-
-    promptInput.addEventListener('blur', () => {
-        if (promptInput.value.trim() === '') {
-            // Remove the typing-active class if input is empty when losing focus
-            mainChat.classList.remove('typing-active');
-        }
-    });
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
 
     promptInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && promptInput.value.trim() !== '') {
-            // Create a new message and append to chat view
-            const newMessage = document.createElement('div');
-            newMessage.classList.add('user-message');
-            newMessage.textContent = promptInput.value;
-            document.getElementById('chat-messages').appendChild(newMessage);
-            
-            // Clear the input field
+            // Hide the prompt section and show the chat view and input
+            promptSection.style.display = 'none';
+            promptInput.style.display = 'none';
+            chatView.style.display = 'block';
+            chatInput.style.display = 'block';
+
+            // Append the initial prompt to the chat messages
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('user-message');
+            userMessage.textContent = promptInput.value;
+            chatMessages.appendChild(userMessage);
+
+            // Clear the prompt input field
             promptInput.value = '';
 
-            // Scroll to bottom of chat view
-            chatView.scrollTop = chatView.scrollHeight;
+            // Scroll to the bottom of chat view
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+            // Append user's message to chat view
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('user-message');
+            userMessage.textContent = chatInput.value;
+            chatMessages.appendChild(userMessage);
+
+            // Clear the chat input field
+            chatInput.value = '';
+
+            // Optionally, simulate a bot response
+            setTimeout(() => {
+                const botMessage = document.createElement('div');
+                botMessage.classList.add('bot-message');
+                botMessage.textContent = "I'm here to assist you!";
+                chatMessages.appendChild(botMessage);
+
+                // Scroll to the bottom of chat view
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1000);
         }
     });
 });
