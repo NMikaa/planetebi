@@ -6,8 +6,8 @@
     <link rel="stylesheet" href="styles.css">
     <title>Chatbot UI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -25,30 +25,30 @@
         </div>
         
         <!-- Main Chat Window -->
-        <div class="main-chat">
+        <div class="main-chat" id="main-chat">
             <div class="top-bar">
                 <span>Name chat</span>
-                <span></span>
                 <div class="icons">
                     <span>🔖</span>
                     <span>🔗</span>
                 </div>
             </div>
-            <div class="prompt-section">
+            <div class="prompt-section" id="prompt-section">
                 <h1>How can I help you today?</h1>
                 <div class="options">
                     <div class="option-card">Saved Prompt Templates</div>
                     <div class="option-card">Media Type Selection</div>
                     <div class="option-card">Multilingual Support</div>
                 </div>
-                <input type="text" placeholder="Type your prompt here..." class="prompt-input">
             </div>
             <div class="chat-view" id="chat-view" style="display: none;">
                 <div class="chat-messages" id="chat-messages">
                     <!-- Messages will be appended here -->
                 </div>
             </div>
-        </div>
+            <input type="text" placeholder="Type your prompt here..." class="prompt-input" id="prompt-input">
+            <input type="text" placeholder="Type your message..." class="chat-input" id="chat-input" style="display: none;">
+        </div>        
     </div>
     <script src="script.js"></script>
 </body>
