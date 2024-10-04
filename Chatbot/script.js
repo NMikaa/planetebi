@@ -27,27 +27,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && chatInput.value.trim() !== '') {
-            // Append user's message to chat view
-            const userMessage = document.createElement('div');
-            userMessage.classList.add('user-message');
-            userMessage.textContent = chatInput.value;
-            chatMessages.appendChild(userMessage);
+    // chatInput.addEventListener('keydown', (e) => {
+    //     if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+    //         // Append user's message to chat view
+    //         const userMessage = document.createElement('div');
+    //         userMessage.classList.add('user-message');
+    //         userMessage.textContent = chatInput.value;
+    //         chatMessages.appendChild(userMessage);
 
-            // Clear the chat input field
-            chatInput.value = '';
+    //         // Clear the chat input field
+    //         chatInput.value = '';
 
-            // Optionally, simulate a bot response
-            setTimeout(() => {
-                const botMessage = document.createElement('div');
-                botMessage.classList.add('bot-message');
-                botMessage.textContent = "I'm here to assist you!";
-                chatMessages.appendChild(botMessage);
+    //         // Optionally, simulate a bot response
+    //         setTimeout(() => {
+    //             const botMessage = document.createElement('div');
+    //             botMessage.classList.add('bot-message');
+    //             chatMessages.appendChild(botMessage);
 
-                // Scroll to the bottom of chat view
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 1000);
-        }
-    });
+    //             // Scroll to the bottom of chat view
+    //             chatMessages.scrollTop = chatMessages.scrollHeight;
+    //         }, 1000);
+    //     }
+    // });
 });
+
+
+document.getElementById('chat-input').addEventListener("keypress", async function (e) {
+    if (e.key === "Enter") {
+        const userMessage = e.target.value;
+
+        // Display user message in chat view
+        displayMessage(userMessage, "user");
+
+        // Send the user message to the FastAPI server
+        const response = await fetch("http://localhost:8000/send_message/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message: userMessage }),
+        });
+
+        const data = await response.json();
+        const botMessage = data.response;
+
+        // Display bot message in chat view
+        displayMessage(botMessage, "bot");
+
+        // Clear the input field
+        e.target.value = "";
+    }
+});
+
+function displayMessage(message, sender) {
+    const chatMessages = document.getElementById("chat-messages");
+    const messageElement = document.createElement("div");
+    
+    if (sender === "user") {
+        messageElement.className = "user-message";
+    } else {
+        messageElement.className = "bot-message";
+    }
+
+    messageElement.textContent = message;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+}
