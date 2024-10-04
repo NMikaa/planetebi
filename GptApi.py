@@ -1,11 +1,16 @@
 import os
 from dotenv import load_dotenv, find_dotenv
-from prompt_utils import get_prompt
 import json
 import requests
 import numpy as np
 import pandas as pd
 load_dotenv(find_dotenv())
+import os
+import requests
+import json
+import numpy as np
+import pandas as pd
+
 class PlanetAssistant:
     def __init__(self):
         self.api_url_chat = "https://api.openai.com/v1/chat/completions"
@@ -15,6 +20,7 @@ class PlanetAssistant:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+        self.conversation_state = {}  # To store conversation context and features
 
     def send_request(self, data_json):
         """
@@ -128,21 +134,34 @@ class PlanetAssistant:
             'habitable': habitable
         }
 
-    def get_dalle_prompt(self, features):
+    def get_dalle_prompt(self):
         """
-        Create a DALL-E prompt based on provided features to generate an image for a child interested in exoplanets.
+        Generate a DALL-E prompt based on the stored conversation state features.
         """
-        prompt = f"Given these features {features}, write a DALL-E prompt to generate a picture for a child who is interested in exoplanets."
-        data = json.dumps({
-            "model": "gpt-4o-mini",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": prompt
-                }
-            ]
-        })
-        return self.send_request(data)
+        base_features = self.conversation_state['features']
+        additional_features = base_features.get('additional_features', [])
+
+        # Start with the main planet description
+        prompt = f"Generate an image of a {base_features['planet_size']} {base_features['planet_type']} planet, which is {base_features['planet_color']} and has a temperature of {base_features['approximate_temperature']}."
+
+        # Add additional features if present
+        if additional_features:
+            prompt += " It also includes " + ", ".join(additional_features) + "."
+
+        # Return the full prompt
+        return prompt
+
+    def add_to_prompt(self, addition):
+        """
+        Add new elements to the existing DALL-E prompt, such as a moon or rings,
+        and store the updated prompt in the conversation state.
+        """
+        # Check if we already have a 'planet_description' field; if not, create it
+        if 'additional_features' not in self.conversation_state['features']:
+            self.conversation_state['features']['additional_features'] = []
+
+        # Append the new addition to the 'additional_features' list
+        self.conversation_state['features']['additional_features'].append(addition)
 
     def generate_dalle_image(self, prompt, size="1024x1024", n=1):
         """
@@ -164,13 +183,9 @@ class PlanetAssistant:
             print("Failed to generate image:", response.text)
             return None
 
-    def generate_planet_image(self, user_input, data):
+    def start_conversation(self, user_input, data):
         """
-        Complete flow:
-        1. Get simple features from user input.
-        2. Estimate planet parameters.
-        3. Generate a DALL-E prompt.
-        4. Generate and return DALL-E image.
+        Start the conversation with the user by parsing initial features and generating a DALL-E prompt.
         """
         # Step 1: Parse simple features
         features = self.parse_planet_description(user_input)
@@ -178,19 +193,51 @@ class PlanetAssistant:
         # Step 2: Estimate additional parameters
         detailed_parameters = self.estimate_planet_parameters(features, data)
 
-        # Step 3: Generate DALL-E prompt
-        dalle_prompt = self.get_dalle_prompt(detailed_parameters)
+        # Store the conversation state for future additions
+        self.conversation_state = {
+            'features': detailed_parameters
+        }
 
-        # Step 4: Generate and return DALL-E image
+    def continue_conversation(self, addition):
+        """
+        Continue the conversation by allowing the user to add elements to the DALL-E prompt.
+        """
+        self.add_to_prompt(addition)
+
+    def finalize_conversation(self):
+        """
+        Finalize the conversation by generating the DALL-E image with the final prompt.
+        """
+        # Step 3: Generate the final DALL-E prompt
+        dalle_prompt = self.get_dalle_prompt()
+
+        # Step 4: Generate and return the DALL-E image
         image_url = self.generate_dalle_image(dalle_prompt)
         return image_url
+
 
 # Example Usage
 
 
 if __name__ == '__main__':
     df = pd.read_csv('Data/merged.csv')
-    user_input = "I want a very big planet, it should be cold, even and blue."
+    user_input = "I want a very big planet, it should be uneven and red."
+
     assistant = PlanetAssistant()
-    image_url = assistant.generate_planet_image(user_input, df)
-    print("Generated Image URL:", image_url)
+
+    # Start the conversation
+    assistant.start_conversation(user_input, df)
+
+
+    print(assistant.finalize_conversation())
+
+    # User wants to add a moon
+    assistant.continue_conversation("a moon orbiting the planet")
+
+
+    print(assistant.finalize_conversation())
+    # User wants to add rings
+    assistant.continue_conversation("rings around the planet")
+
+    print(assistant.finalize_conversation())
+
