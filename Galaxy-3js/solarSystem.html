@@ -16,10 +16,19 @@
             font-style: normal;
         }
         canvas { display: block; }
+        .textArea{
+            position: absolute;
+            top: 10%;
+            left: 5%;
+            color: aliceblue;
+        }
     </style>
 </head>
 <body>
-    <h1>Solar System</h1>
+    <div class="textArea">
+        <h1 class="heading">Solar System</h1>
+        <div id="planet-info">Click on a planet to see its information.</div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
     <script src="js/solarSystem.js"></script>

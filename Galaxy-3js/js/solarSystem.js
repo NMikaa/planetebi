@@ -4,7 +4,9 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-
+// Global variable to store the selected planet's mesh
+let selectedPlanet = null;
+let targetCameraPosition = new THREE.Vector3(); // Position to move the camera to
 // OrbitControls for camera interaction
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; // Smooth controls
@@ -38,13 +40,14 @@ const sunTexture = textureLoader.load('assets/sun.jpg');
 const sunGeometry = new THREE.SphereGeometry(6, 32, 32);
 const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+sun.name = 'Sun';
 scene.add(sun);
 
 // Planets array and orbit speeds
 const planets = [];
 const planetSpeeds = []; // Speed array for each planet
 const planetNames = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'];
-const distances = [10, 15, 20, 25, 80, 60, 35, 45]; // Orbital distances
+const distances = [10, 15, 20, 25, 80, 65, 35, 50]; // Orbital distances
 
 // Create planet function
 const createPlanet = (radius, distance, texturePath, name, speed) => {
@@ -73,14 +76,15 @@ const createPlanet = (radius, distance, texturePath, name, speed) => {
 };
 
 // Example planets with textures and speeds (adjust speeds for faster inner planets)
-createPlanet(0.222, 10, 'assets/mercury.jpg', 'Mercury', 0.04); 
-createPlanet(0.564, 15, 'assets/venus.jpg', 'Venus', 0.02);  
-createPlanet(0.6, 20, 'assets/earth.jpg', 'Earth', 0.01);  
-createPlanet(0.294, 25, 'assets/mars.jpg', 'Mars', 0.008);  
-createPlanet(5.1, 80, 'assets/jupiter.jpg', 'Jupiter', 0.002); 
-createPlanet(4.98, 60, 'assets/saturn.jpg', 'Saturn', 0.003);  
-createPlanet(2.16, 35, 'assets/uranus.jpg', 'Uranus', 0.005);  
-createPlanet(2.1, 45, 'assets/neptune.jpg', 'Neptune', 0.004);  
+createPlanet(0.422, 10, 'assets/mercury.jpg', 'Mercury', 0.01); 
+createPlanet(0.664, 15, 'assets/venus.jpg', 'Venus', 0.005);  
+createPlanet(0.7, 20, 'assets/earth.jpg', 'Earth', 0.0025);  
+createPlanet(0.494, 25, 'assets/mars.jpg', 'Mars', 0.002);  
+createPlanet(5.1, 45, 'assets/jupiter.jpg', 'Jupiter', 0.0005); 
+createPlanet(4.38, 65, 'assets/saturn.jpg', 'Saturn', 0.0002);  
+createPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.0015);  
+createPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.001);  
+
 
 // Orbiting animation
 function animate() {
@@ -95,6 +99,7 @@ function animate() {
         planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
     });
 
+    focusOnSelectedPlanet();
     controls.update(); // Update the controls for damping
     renderer.render(scene, camera);
 }
@@ -108,13 +113,15 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-function onClick(event) {
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
 
-    if (intersects.length > 0) {
-        alert(`You clicked on: ${intersects[0].object.name}`);
+function focusOnSelectedPlanet() {
+    if (selectedPlanet) {
+        // Smooth transition to the planet position
+        camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
+        controls.target.lerp(selectedPlanet.position, 0.05); // Focus the controls' target to the planet
+        controls.update();
     }
+    
 }
 
 window.addEventListener('mousemove', onMouseMove, false);
@@ -130,3 +137,136 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 });
+
+
+// Function to create asteroid belt
+const createAsteroidBelt = (numAsteroids, innerRadius, outerRadius) => {
+    for (let i = 0; i < numAsteroids; i++) {
+        const asteroidGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Small sphere for asteroids
+        const asteroidMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const asteroid = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
+        
+        // Random distance and angle within the belt range
+        const distance = Math.random() * (outerRadius - innerRadius) + innerRadius; 
+        const angle = Math.random() * Math.PI * 2; // Random angle in radians
+
+        // Position the asteroid
+        asteroid.position.x = Math.cos(angle) * distance;
+        asteroid.position.z = Math.sin(angle) * distance;
+
+        scene.add(asteroid);
+    }
+};
+
+// Function to create rings for Jupiter
+const createSaturnRings = (innerRadius, outerRadius) => {
+    planet = "Saturn";
+    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+    const ringMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide }); // Gray color
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    
+    // Rotate to make it horizontal
+    ring.rotation.x = Math.PI / 2; 
+    saturnRing.position.set(planet.mesh.position.x, 0, planet.mesh.position.z);
+    scene.add(ring);
+
+    return ring; // Return the ring mesh for further manipulation
+};
+
+
+// Create rings for Jupiter
+// const saturnRing = createSaturnRings(10, 20); // Inner radius 6, outer radius 8
+
+
+// Create asteroid belt between Mars and Jupiter
+createAsteroidBelt(2000, 35, 40); // 2000 asteroids between the distance of Mars (35) and Jupiter (40)
+
+
+// Adjust camera for proper view
+camera.position.z = 100;
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
+
+
+async function displayPlanetInfo(planetData) {
+    const infoDiv = document.getElementById('planet-info');
+    const heading = document.querySelector('.heading');
+    heading.textContent = `${planetData.englishName ? planetData.englishName : 'N/A' }`;
+    infoDiv.innerHTML = `
+        Mass: ${planetData.mass ? planetData.mass : 'N/A'} kg<br>
+        Diameter: ${planetData.meanRadius ? planetData.meanRadius * 2 : 'N/A'} km<br>
+        Distance from Sun: ${planetData.semimajorAxis ? planetData.semimajorAxis : 'N/A'} km<br>
+        <em>${planetData.isPlanet ? 'This is a planet.' : 'This is not a planet.'}</em>
+    `;
+}
+
+
+let planetDataCache = []; // Global cache for planet data
+
+// Fetch planet data and store it in cache
+async function fetchPlanetData() {
+    try {
+        const response = await fetch('https://api.le-systeme-solaire.net/rest/bodies/');
+        const data = await response.json();
+        planetDataCache = data.bodies; // Store all planet data globally
+    } catch (error) {
+        console.error('Error fetching planet data:', error);
+    }
+}
+
+// Filter planet data by name from cache
+function getPlanetDataByName(planetName) {
+    const filteredPlanets = planetDataCache.filter(
+        planet => planet.englishName.toLowerCase() === planetName.toLowerCase()
+    );
+    return filteredPlanets.length > 0 ? filteredPlanets[0] : null;
+}
+
+// Call this once during scene initialization
+fetchPlanetData();
+
+// Modify the onClick function to use the cached data
+async function onClick(event) {
+    raycaster.setFromCamera(mouse, camera);
+    const objectsToCheck = [...planets.map(p => p.mesh), sun];
+    const intersects = raycaster.intersectObjects(objectsToCheck);
+
+    if (intersects.length > 0) {
+        const planetName = intersects[0].object.name;
+        const planetData = getPlanetDataByName(planetName); // Use cached data
+        if (planetData) {
+            selectedPlanet = intersects[0].object;
+            targetCameraPosition.set(
+                selectedPlanet.position.x,
+                selectedPlanet.position.y,
+                selectedPlanet.position.z + 10
+            ); // Zoom in
+            displayPlanetInfo(planetData);
+        } else {
+            console.log(`Planet named "${planetName}" not found.`);
+        }
+    } else {
+        resetCamera();
+    }
+}
+
+// Function to reset camera and controls
+function resetCamera() {
+    const infoDiv = document.getElementById('planet-info');
+    const title = document.querySelector('.heading');
+    infoDiv.textContent = "Click on a planet to see its information";
+    title.textContent = 'Solar System';
+    selectedPlanet = null;
+    targetCameraPosition.set(0, 20, 50); // Your default camera position
+    camera.position.copy(targetCameraPosition); // Reset the camera position
+
+    // Reset the OrbitControls target (important)
+    controls.target.set(0, 0, 0); // Reset target to center of the system
+    controls.update(); // Ensure the controls recognize the change
+}
