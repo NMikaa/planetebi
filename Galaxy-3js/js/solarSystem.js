@@ -84,8 +84,7 @@ createPlanet(4.38, 65, 'assets/saturn.jpg', 'Saturn', 0.0002);
 createPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.0015);  
 createPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.001);  
 
-<<<<<<< Updated upstream
-=======
+
 // Orbiting animation
 function animate() {
     requestAnimationFrame(animate);
@@ -103,7 +102,6 @@ function animate() {
     controls.update(); // Update the controls for damping
     renderer.render(scene, camera);
 }
->>>>>>> Stashed changes
 
 // Mouse event detection for interaction
 const raycaster = new THREE.Raycaster();
@@ -116,7 +114,8 @@ function onMouseMove(event) {
 
 async function onClick(event) {
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
+    const objectsToCheck = [...planets.map(p => p.mesh), sun]
+    const intersects = raycaster.intersectObjects(objectsToCheck);
 
     if (intersects.length > 0) {
         const planetname = intersects[0].object.name;
@@ -132,7 +131,7 @@ async function onClick(event) {
         const title = document.querySelector('.heading');
         infoDiv.textContent = "Click on a planet to see its information"
         title.textContent = 'Solar System'
-        selectedPlanet = sun;
+        selectedPlanet = null;
         targetCameraPosition.set(0, 20, 50); // Your default camera position
         camera.position.copy(targetCameraPosition); // Reset the camera position
     
@@ -151,10 +150,10 @@ function focusOnSelectedPlanet() {
         camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
         controls.target.lerp(selectedPlanet.position, 0.05); // Focus the controls' target to the planet
         controls.update();
-    } else {
-        camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
-        controls.target.lerp(sun.position, 0.05); // Focus the controls' target to the planet
-        controls.update();
+    } else{
+        // camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
+        // controls.target.lerp(sun.position, 0.05); // Focus the controls' target to the planet
+        // controls.update();
     }
     
 }
@@ -164,7 +163,7 @@ window.addEventListener('click', onClick, false);
 
 // Adjust camera for proper view
 camera.position.z = 100;
-// animate();
+animate();
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -212,57 +211,10 @@ const createSaturnRings = (innerRadius, outerRadius) => {
 // Create rings for Jupiter
 // const saturnRing = createSaturnRings(10, 20); // Inner radius 6, outer radius 8
 
-function animate() {
-    requestAnimationFrame(animate);
-
-    planets.forEach((planet, index) => {
-        // Increase the angle over time (based on speed)
-        planet.angle += planetSpeeds[index];
-
-        // Calculate new x and z positions to keep the planet on its circular orbit
-        planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
-        planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
-
-        // Update Saturn's rings position to follow Saturn
-        if (planet.name === 'Saturn') {
-            saturnRing.position.set(planet.mesh.position.x, 0, planet.mesh.position.z);
-        }
-    });
-
-    controls.update(); // Update the controls for damping
-    renderer.render(scene, camera);
-}
 
 // Create asteroid belt between Mars and Jupiter
 createAsteroidBelt(2000, 35, 40); // 2000 asteroids between the distance of Mars (35) and Jupiter (40)
 
-
-// Create the planets and start the animation
-animate();
-
-function onMouseMove(event) {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-}
-
-function onClick(event) {
-    raycaster.setFromCamera(mouse, camera);
-    
-    // Include the Sun in the intersectObjects array
-    const objectsToCheck = [...planets.map(p => p.mesh), sun]; // Add sun to the list
-    const intersects = raycaster.intersectObjects(objectsToCheck);
-
-    if (intersects.length > 0) {
-        if (intersects[0].object === sun) {
-            alert(`You clicked on: sun`);
-        } else {
-            alert(`You clicked on: ${intersects[0].object.name}`);
-        }
-    }
-}
-
-window.addEventListener('mousemove', onMouseMove, false);
-window.addEventListener('click', onClick, false);
 
 // Adjust camera for proper view
 camera.position.z = 100;
