@@ -28,21 +28,36 @@ body {
   border: none;
 }
 
-.folders {
+.chat-archive {
   flex-grow: 1;
+  margin-bottom: 20px; /* Add margin to separate it from the new chat button */
 }
 
-.folders .folder {
-  margin: 10px 0;
-  cursor: pointer;
-  padding: 10px;
-  background: rgba(0, 102, 191, 0.5);
-  border-radius: 10px;
-  transition: background 0.3s;
+.chat-archive h3 {
+  font-size: 18px; /* Subtitle size */
+  margin-bottom: 10px; /* Spacing below subtitle */
 }
 
-.folders .folder:hover {
-  background: rgba(0, 102, 191, 0.7);
+.archive-buttons {
+  display: flex;
+  flex-direction: column; /* Align archive buttons vertically */
+}
+
+.archive-button {
+  margin: 5px 0; /* Spacing between buttons */
+  padding: 8px; /* Reduced padding for smaller buttons */
+  background: lightgreen; /* Light green background */
+  color: white; /* White text */
+  border: none; /* Remove border */
+  border-radius: 0; /* No rounded corners */
+  cursor: pointer; /* Cursor pointer for buttons */
+  transition: background 0.3s; /* Transition for hover effect */
+  width: 100%; /* Full width of the container */
+  text-align: center; /* Center the text */
+}
+
+.archive-button:hover {
+  background: #66bb6a; /* Darker green for hover effect */
 }
 
 .new-chat {
@@ -169,10 +184,11 @@ body {
   border: 1px solid #ccc;
 }
 
-.chat-messages{
+.chat-messages {
   display: flex;
   flex-direction: column;
 }
+
 .user-message {
   background: rgba(0, 102, 191, 0.5);
   padding: 8px;
@@ -192,8 +208,10 @@ body {
   align-self: flex-start;
   width: fit-content;
 }
+
 .bot-image {
-    max-width: 100%;   /* Ensure the image doesn't overflow its container */
-    border-radius: 8px; /* Optional styling */
-    margin: 10px 0;
+  max-width: 100%; /* Ensure the image doesn't overflow its container */
+  border-radius: 8px; /* Optional styling */
+  margin: 10px 0;
 }
+

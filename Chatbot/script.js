@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatView = document.getElementById('chat-view');
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
+    const newChatButton = document.querySelector('.new-chat');
+    const chatArchiveSection = document.getElementById('chat-archive'); // Selector for the chat archive section
     let isWaitingForBot = false;
 
     // Add loader during bot response
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
     // Function to display messages (user or bot)
     function displayMessage(message, sender) {
         const messageElement = document.createElement("div");
@@ -43,6 +46,49 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.appendChild(botMessage);
         chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
     }
+
+  // Function to clear chat messages
+  function clearChat() {
+    chatMessages.innerHTML = ""; // Clear previous messages
+    promptInput.value = ""; // Clear the prompt input
+    chatInput.value = ""; // Clear the chat input
+}
+
+// Function to archive the current chat
+// Function to archive the current chat
+function archiveCurrentChat() {
+    const date = new Date().toLocaleString(); // Get current date and time
+    const archiveButton = document.createElement('button'); // Create a button for the archived chat
+    archiveButton.textContent = `Chat from ${date}`; // Set title with date
+    archiveButton.classList.add('archive-button'); // Add a class for styling
+
+    // Create a new div to contain the new archive button
+    const archiveContainer = document.createElement('div');
+    archiveContainer.classList.add('archive-container'); // Optional: add a class for styling
+    archiveContainer.appendChild(archiveButton);
+
+    // Insert the new container at the beginning of the chat archive section
+    chatArchiveSection.insertBefore(archiveContainer, chatArchiveSection.firstChild);
+}
+
+
+// Add event listener for the new chat button
+newChatButton.addEventListener('click', async () => {
+    archiveCurrentChat(); // Archive the current chat before clearing
+    clearChat(); // Clear chat when new chat button is clicked
+    const response = await fetch("http://127.0.0.1:8000/switch_convo/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+    promptSection.style.display = 'none'; // Hide the prompt section
+    chatView.style.display = 'block'; // Show the chat view
+    chatInput.style.display = 'block'; // Show the chat input
+    promptInput.style.display = 'none'; // Hide prompt input after new chat
+    chatInput.focus(); // Focus on chat input for immediate messaging
+});
+
 
     // Event listener for the initial prompt
     promptInput.addEventListener('keydown', async (e) => {
