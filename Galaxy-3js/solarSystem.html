@@ -8,12 +8,130 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <style>
+        .chat-popup {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 300px; /* Set fixed width */
+            background-color: #1e1e1e; /* Dark background */
+            border: 1px solid #333; /* Darker border */
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 1000;
+        }
+
+        .chat-header {
+            background-color: #333; /* Darker header */
+            color: white;
+            padding: 10px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-input {
+            width: calc(100% - 20px); /* Full width minus padding */
+            padding: 10px;
+            margin: 10px; /* Adds space between input and edges */
+            background-color: #444; /* Dark input background */
+            color: white; /* White text */
+            border: none;
+            border-radius: 5px;
+            box-sizing: border-box; /* Ensure padding doesn't add to total width */
+        }
+
+        .chat-input:focus {
+            outline: none;
+        }
+
+        .chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%; /* Rounded button */
+            width: 50px; /* Circle size */
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chat-message {
+            display: flex;
+            justify-content: flex-end; /* Align message to the right */
+            margin-bottom: 5px;
+            font-size: small;
+        }
+
+        .chat-message p {
+            background-color: #007bff;
+            color: white;
+            padding: 5px;
+            margin: 2px;
+            border-radius: 15px;
+            max-width: 100%;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        .close-button {
+            background-color: transparent;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Style for messages (right side, blue rectangle) */
+        .right-message {
+            background-color: #007bff; /* Blue color */
+            color: white;
+            padding: 10px 10px;
+            border-radius: 10px; /* Rounded corners */
+            max-width: 200px; /* Limit message width */
+            text-align: left; /* Align text to the left inside the rectangle */
+            margin: 5px 0;
+            align-self: flex-end; /* Push message to the right */
+            display: inline-block;
+        }
+
+        /* Style for responses (left side, gray rectangle) */
+        .left-response {
+            background-color: #e0e0e0; /* Gray color */
+            color: black;
+            padding: 10px 10px;
+            border-radius: 10px; /* Rounded corners */
+            max-width: 200px; /* Limit response width */
+            text-align: left; /* Align text to the left inside the rectangle */
+            margin: 5px 0;
+            align-self: flex-start; /* Push response to the left */
+            display: inline-block;
+        }
+
+        /* General chat body styling to allow for flex alignment */
+        .chat-body {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            height: 350px;
+            overflow-y: auto;
+        }
+
+        .chat-body-p{
+            color: white;
+        }
+
+
         body { 
             margin: 0;
             font-family: "Chivo Mono", monospace;
-            font-optical-sizing: auto;
-            font-weight: 500;
-            font-style: normal;
         }
         canvas { display: block; }
         .textArea{
@@ -29,10 +147,81 @@
         <h1 class="heading">Solar System</h1>
         <div id="planet-info">Click on a planet to see its information.</div>
     </div>
+
+    <!-- Chat Popup HTML -->
+    <div id="chat-popup" class="chat-popup">
+        <div class="chat-header">
+            <span class="chat-title">Chat</span>
+            <button id="close-chat" class="close-button">&times;</button>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <p class="chat-body-p">Welcome to the Solar System chat!</p>
+        </div>
+        <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." />
+    </div>
+    <button id="chat-button" class="chat-button">
+        <img src="https://img.icons8.com/material-outlined/24/ffffff/chat.png" alt="Chat Icon">
+    </button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/solarSystem.js"></script>
     <script src="js/planets.js"></script>
+
+    <script>
+        // Get elements
+        const chatPopup = document.getElementById("chat-popup");
+        const chatButton = document.getElementById("chat-button");
+        const closeChatButton = document.getElementById("close-chat");
+        const chatBody = document.getElementById("chat-body");
+        const chatInput = document.getElementById("chat-input");
+
+        // Open chat when the button is clicked
+        chatButton.addEventListener("click", () => {
+            chatPopup.style.display = "block";
+        });
+
+        // Close chat when the close button is clicked
+        closeChatButton.addEventListener("click", () => {
+            chatPopup.style.display = "none";
+        });
+
+       // Send chat message on pressing Enter
+    chatInput.addEventListener("keydown", (e) => {
+        if (e.key === 'Enter') {
+            const message = chatInput.value.trim();
+            if (message) {
+                addMessage(message); // Add message to the chat on the right side
+                addResponse('## HELLO there!\nThis is a *sample* response with **Markdown**.\n- Item 1\n- Item 2'); // Example response
+            }
+            e.preventDefault(); // Prevent default behavior of form submission
+        }
+    });
+
+    // Function to add user's message on the right side (blue circle)
+    function addMessage(message) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("chat-message", "right-message"); // Apply right message style
+
+        // Use marked to parse markdown
+        messageElement.innerHTML = marked.parse(message); 
+
+        chatBody.appendChild(messageElement); // Add message to chat body
+        chatInput.value = ""; // Clear the input
+        chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+    }
+
+    // Function to add response on the left side (gray circle)
+    function addResponse(response) {
+        const responseElement = document.createElement("div");
+        responseElement.classList.add("chat-response", "left-response"); // Apply left response style
+        console.log(typeof marked); // Should log "function"
+        // Use marked to parse markdown
+        responseElement.innerHTML = marked.parse(response); 
+
+        chatBody.appendChild(responseElement); // Add response to chat body
+        chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+    }
+    </script>
 </body>
 </html>
-
