@@ -27,22 +27,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
                 // Send the prompt to the server
-                const response = await fetch("http://localhost:8000/send_message/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ message: promptInput.value }),
-                });
+                const response = await fetch("http://127.0.0.1:8000/start_of_conversation/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ user_input: promptInput.value }),  // Properly format the body as JSON
+            });
 
-                const data = await response.json();
-                const botMessage = data.response;
+            if (response.ok) {
+                // Get the image from the response as a blob
+                const blob = await response.blob();
 
-                // Display bot message in chat view
-                displayMessage(botMessage, "bot");
+                // Create an object URL for the image
+                const imageUrl = URL.createObjectURL(blob);
 
-                // Clear the prompt input field
-                promptInput.value = '';
+                // Create an image element and set its source to the image URL
+                const botMessage = document.createElement('img');
+                botMessage.src = imageUrl;
+                botMessage.classList.add('bot-image');  // Optional: Add a class for styling
+
+                // Append the image to the chat messages
+                chatMessages.appendChild(botMessage);
+            }
 
             } catch (error) {
                 console.error('Error fetching bot response:', error);
@@ -69,19 +76,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.target.value = "";
 
                 // Send the user message to the FastAPI server
-                const response = await fetch("http://localhost:8000/send_message/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ message: userMessage }),
-                });
+                const response = await fetch("http://127.0.0.1:8000/continue_conversation/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ user_input: userMessage }),
+        });
 
-                const data = await response.json();
-                const botMessage = data.response;
+        if (response.ok) {
+            // Get the image from the response as a blob
+            const blob = await response.blob();
 
-                // Display bot message in chat view
-                displayMessage(botMessage, "bot");
+            // Create an object URL for the image
+            const imageUrl = URL.createObjectURL(blob);
+
+            // Create an image element and set its source to the image URL
+            const botMessage = document.createElement('img');
+            botMessage.src = imageUrl;
+            botMessage.classList.add('bot-image');  // Optional: Add a class for styling
+
+            // Append the image to the chat messages
+            chatMessages.appendChild(botMessage);
+            }
 
             } catch (error) {
                 console.error('Error fetching bot response:', error);
