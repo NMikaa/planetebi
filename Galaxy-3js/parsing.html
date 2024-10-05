@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Search</title>
+</head>
+<body>
+    <h1>Planet Search</h1>
+    <input type="text" id="planetNameInput" placeholder="Enter planet name" />
+    <button id="searchButton">Search</button>
+    <h2>Search Results:</h2>
+    <pre id="results"></pre>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script>
+        let planets = {}; // Use an object to hold unique planet data
+
+        // Fetch and parse the CSV data
+        
+
+        // Function to find planets by exact name
+        const findPlanetsByName = (name) => {
+            return planets[name.toLowerCase()] ? { name: name, releasedate: planets[name.toLowerCase()].releasedate } : null;
+        };
+
+
+        // Event listener for the search button
+        document.getElementById('searchButton').addEventListener('click', () => {
+            const planetName = document.getElementById('planetNameInput').value.trim();
+            const foundPlanet = findPlanetsByName(planetName);
+
+            // Displaying results
+            const resultsElement = document.getElementById('results');
+            if (foundPlanet) {
+                resultsElement.textContent = 'Exact Match:\n' + JSON.stringify(foundPlanet, null, 2);
+            } else if (partialResults.length > 0) {
+                resultsElement.textContent = 'No exact matches found.\n\nPartial Matches:\n' + JSON.stringify(partialResults, null, 2);
+            } else {
+                resultsElement.textContent = 'No matches found.';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -29,7 +29,7 @@ scene.add(backgroundSphere);
 
 
 // Light (the Sun)
-const light = new THREE.PointLight(0xffffff, 0.5, 0);
+const light = new THREE.PointLight(0xffffff, 1, 1000);
 light.position.set(0, 0, 0);
 scene.add(light);
 
@@ -287,7 +287,7 @@ async function onClick(event) {
                 selectedPlanet.position.x,
                 selectedPlanet.position.y,
                 selectedPlanet.position.z + 10
-            ); 
+            ); // Zoom in
             displayPlanetInfo(planetData);
             console.log(planetData)
         } else {

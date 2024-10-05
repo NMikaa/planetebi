@@ -1,6 +1,40 @@
+ *{
+  font-family: 'Gilroy';
+ }
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('Gilroy-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Typewriter effect styling */
+/* Typewriter effect styling */
+h1 {
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  overflow: hidden; /* Hides the text while it's being typed */
+  border-right: 3px solid transparent; /* Hide the caret during typing */
+  width: 0; /* Initially, the width is 0 to hide the text */
+  animation: typing 3.5s steps(30, end) forwards, blink-caret 0.75s step-end infinite 3.5s; /* Delay the blinking caret */
+}
+
+/* Typing effect */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Blinking caret */
+@keyframes blink-caret {
+  from, to { border-color: transparent; } /* Caret is invisible during typing */
+  50% { border-color: black; } /* Blinking effect only starts after typing is done */
+}
+
+
 body {
   margin: 0;
-  font-family: "Inter", sans-serif;
   background-color: #1a1a1a;
   color: #e0e0e0;
   font-optical-sizing: auto;
@@ -16,7 +50,7 @@ body {
 .sidebar {
   width: 300px;
   padding: 20px;
-  background-color: #2a2a2a;
+  background-color: #1a1a1a;
   display: flex;
   flex-direction: column;
 }
@@ -24,7 +58,7 @@ body {
 .sidebar input[type=text] {
   margin-bottom: 20px;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 20px;
   border: none;
 }
 
@@ -46,32 +80,34 @@ body {
 .archive-button {
   margin: 5px 0; /* Spacing between buttons */
   padding: 8px; /* Reduced padding for smaller buttons */
-  background: lightgreen; /* Light green background */
+  background: rgba(0, 102, 191, 0.5); /* Light green background */
   color: white; /* White text */
   border: none; /* Remove border */
   border-radius: 0; /* No rounded corners */
   cursor: pointer; /* Cursor pointer for buttons */
   transition: background 0.3s; /* Transition for hover effect */
   width: 100%; /* Full width of the container */
+  border-radius: 15px;
   text-align: center; /* Center the text */
 }
 
 .archive-button:hover {
-  background: #66bb6a; /* Darker green for hover effect */
+  background: rgb(15, 111, 145); /* Darker green for hover effect */
 }
 
 .new-chat {
-  background-color: #0066bf;
+  background-color: #ef6a36;
   border: none;
   color: white;
   padding: 15px;
-  border-radius: 8px;
+  border-radius: 15px;
   cursor: pointer;
   transition: background 0.3s;
 }
 
 .new-chat:hover {
-  background-color: #005bb5;
+  background-color: #f8925f;
+
 }
 
 .main-chat {
@@ -93,12 +129,18 @@ body {
 }
 
 .option-card {
-  background-color: #2a2a2a;
+  background: #1a1a1a;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 15px;
   cursor: pointer;
   transition: background 0.3s;
   width: 15%;
+}
+
+.input{
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .option-card:hover {
@@ -154,10 +196,10 @@ body {
 }
 
 #prompt-input {
-  width: calc(100% - 100px);
+  width: 57%;
   padding: 10px;
   margin-top: 10px;
-  border-radius: 5px;
+  border-radius: 20px;
   border: 1px solid #ccc;
 }
 
@@ -179,8 +221,9 @@ body {
 #chat-input {
   width: calc(100% - 100px);
   padding: 10px;
-  margin-top: 10px;
-  border-radius: 5px;
+  /* margin-top: 10px; */
+  /* margin-bottom: 20px; */
+  border-radius: 15px;
   border: 1px solid #ccc;
 }
 

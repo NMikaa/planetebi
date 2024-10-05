@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exoplanetary System Visualization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; 
+            overflow: hidden;
+            font-family: "Chivo Mono", monospace;
+            font-optical-sizing: auto;
+            font-weight: 500;
+            font-style: normal; }
+        #search-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+        }
+        #search-bar input {
+            padding: 5px;
+            font-size: 16px;
+        }
+        #planet-info { 
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+        }
+        .heading {
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="search-bar">
+        <label for="hostNameInput">Host Star Name:</label>
+        <input type="text" id="hostNameInput" placeholder="Enter host star name">
+    </div>
+    <div id="planet-info">
+        <div class="heading">Exoplanetary System</div>
+        <p>Enter a host star name to see its planetary system.</p>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        const textureLoader = new THREE.TextureLoader();
+        const backgroundTexture = textureLoader.load('assets/milkyway.jpg');
+
+        // Create a large sphere for the background
+        const backgroundGeometry = new THREE.SphereGeometry(500, 64, 64);
+        const backgroundMaterial = new THREE.MeshBasicMaterial({ 
+            map: backgroundTexture, 
+            side: THREE.BackSide 
+        });
+        const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        scene.add(backgroundSphere);
+
+        const light = new THREE.PointLight(0xffffff, 1, 1000);
+        light.position.set(0, 0, 0);
+        scene.add(light);
+
+        let planetarySystems = new Map(); // Map to hold planetary systems data
+        let planets = [];
+        let planetSpeeds = [];
+        let currentStar = null;
+        // Function to load random planet textures
+        function getRandomTexture(folderPath) {
+            const textures = [
+                `${folderPath}/planet1.png`,
+                `${folderPath}/planet2.png`,
+                `${folderPath}/planet3.png`,
+                `${folderPath}/planet4.png`,
+                `${folderPath}/planet5.png`,
+                `${folderPath}/planet6.png`,
+                `${folderPath}/planet7.png`,
+            ];
+            return textures[Math.floor(Math.random() * textures.length)];
+        }
+
+        function setupSystem(systemData) {
+            
+            console.log(systemData)
+            if (currentStar) {
+                scene.remove(currentStar);
+                currentStar.geometry.dispose();
+                currentStar.material.dispose();
+                currentStar = null;
+            }
+            
+            planets.forEach(p => {
+                scene.remove(p.mesh);
+                p.mesh.geometry.dispose();
+                p.mesh.material.dispose();
+            });
+            planets = [];
+            planetSpeeds = [];
+
+            // Create star (the central "Sun")
+            const starTexture = textureLoader.load('assets/trappist-1/star.jpg');
+            const starGeometry = new THREE.SphereGeometry(systemData[0].star_radius * 2, 32, 32);
+            const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture });
+            currentStar = new THREE.Mesh(starGeometry, starMaterial);
+            currentStar.name = systemData[0].star_name;
+            scene.add(currentStar);
+
+            // Create planets
+            systemData.forEach((planetData, index) => {
+                createPlanet(
+                    planetData.planet_radius/2, // Adjust scale 
+                    Math.max((index + 1) * 20,  (index + 1) * 20 + systemData[0].star_radius *2), // Placeholder distance from star
+                    getRandomTexture('assets/trappist-1'), // Random texture from assets
+                    planetData.planet_name,
+                    0.01 // Placeholder speed
+                );
+            });
+        }
+
+        // Create a planet with specified parameters
+        function createPlanet(radius, distance, texturePath, name, speed) {
+            const planetGeometry = new THREE.SphereGeometry(radius, 32, 32);
+            const planetTexture = textureLoader.load(texturePath);
+            const material = new THREE.MeshStandardMaterial({ map: planetTexture });
+            const planet = new THREE.Mesh(planetGeometry, material);
+            planet.position.x = distance;
+            planet.name = name;
+            scene.add(planet);
+
+            planets.push({ mesh: planet, distance, angle: 0 });
+            planetSpeeds.push(speed);
+        }
+
+        // Display planet information
+        function displayPlanetInfo(systemData) {
+            const infoDiv = document.getElementById('planet-info');
+            const heading = document.querySelector('.heading');
+            let starName = systemData[0].star_name;
+            console.log(starName)
+            heading.textContent = `System: ${starName} system`;
+
+            let content = `<strong>Star Name:</strong> ${starName}<br>`;
+            systemData.forEach(planetData => {
+                content += `<strong>Planet Name:</strong> ${planetData.planet_name}<br>
+                <strong>Planet Radius:</strong> ${planetData.planet_radius} Earth radii<br>
+                <strong>Planet Mass:</strong> ${planetData.planet_mass} Earth masses<br>
+                <strong>Star Temperature:</strong> ${planetData.star_temperature} K<br>
+                <strong>Star Radius:</strong> ${planetData.star_radius} Solar radii<br><br>`;
+            });
+
+            infoDiv.innerHTML = content;
+        }
+
+        // Fetch and load exoplanetary data
+        async function fetchSystemData() {
+            try {
+                const response = await fetch('planets.json');
+                const data = await response.json();
+                
+                // Organize the data into the map
+                data.forEach(system => {
+                    if (!planetarySystems.has(system.star_name)) {
+                        planetarySystems.set(system.star_name, []);
+                    }
+                    planetarySystems.get(system.star_name).push(system);
+                });
+
+                console.log(planetarySystems); // For debugging
+            } catch (error) {
+                console.error('Error fetching system data:', error);
+            }
+        }
+
+        fetchSystemData();
+
+        // Input event listener for searching a planetary system by host star name
+        const input = document.getElementById('hostNameInput');
+        input.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                const hostName = input.value.trim();
+                if (planetarySystems.has(hostName)) {
+                    const systemData = planetarySystems.get(hostName);
+                    setupSystem(systemData);
+                    displayPlanetInfo(systemData);
+                } else {
+                    alert('System not found.');
+                }
+            }
+        });
+
+        // Orbiting animation
+        function animate() {
+            requestAnimationFrame(animate);
+            planets.forEach((planet, index) => {
+                planet.angle += planetSpeeds[index];
+                planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
+                planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
+            });
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        camera.position.z = 100;
+        animate();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
