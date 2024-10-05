@@ -4,7 +4,9 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-
+// Global variable to store the selected planet's mesh
+let selectedPlanet = null;
+let targetCameraPosition = new THREE.Vector3(); // Position to move the camera to
 // OrbitControls for camera interaction
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; // Smooth controls
@@ -82,6 +84,26 @@ createPlanet(4.38, 65, 'assets/saturn.jpg', 'Saturn', 0.0002);
 createPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.0015);  
 createPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.001);  
 
+<<<<<<< Updated upstream
+=======
+// Orbiting animation
+function animate() {
+    requestAnimationFrame(animate);
+
+    planets.forEach((planet, index) => {
+        // Increase the angle over time (based on speed)
+        planet.angle += planetSpeeds[index];
+
+        // Calculate new x and z positions to keep the planet on its circular orbit
+        planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
+        planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
+    });
+
+    focusOnSelectedPlanet();
+    controls.update(); // Update the controls for damping
+    renderer.render(scene, camera);
+}
+>>>>>>> Stashed changes
 
 // Mouse event detection for interaction
 const raycaster = new THREE.Raycaster();
@@ -92,13 +114,49 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-function onClick(event) {
+async function onClick(event) {
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
 
     if (intersects.length > 0) {
-        alert(`You clicked on: ${intersects[0].object.name}`);
+        const planetname = intersects[0].object.name;
+        const planetData = await fetchPlanetData(planetname);
+        alert(planetname)
+        selectedPlanet = intersects[0].object;
+        targetCameraPosition.set(selectedPlanet.position.x, selectedPlanet.position.y, selectedPlanet.position.z + 10); // Zoom in
+        displayPlanetInfo(JSON.stringify(planetData))
+        displayPlanetInfo(planetData)
+        
+    } else {
+        const infoDiv = document.getElementById('planet-info');
+        const title = document.querySelector('.heading');
+        infoDiv.textContent = "Click on a planet to see its information"
+        title.textContent = 'Solar System'
+        selectedPlanet = sun;
+        targetCameraPosition.set(0, 20, 50); // Your default camera position
+        camera.position.copy(targetCameraPosition); // Reset the camera position
+    
+        // Reset the OrbitControls target (important)
+        controls.target.set(0, 0, 0); // Reset target to center of the system or any desired point
+        controls.update(); // Ensure the controls recognize the change
+    
+        console.log("Esc key pressed!");
+        // You can call another function or perform an action here
     }
+}
+
+function focusOnSelectedPlanet() {
+    if (selectedPlanet) {
+        // Smooth transition to the planet position
+        camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
+        controls.target.lerp(selectedPlanet.position, 0.05); // Focus the controls' target to the planet
+        controls.update();
+    } else {
+        camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
+        controls.target.lerp(sun.position, 0.05); // Focus the controls' target to the planet
+        controls.update();
+    }
+    
 }
 
 window.addEventListener('mousemove', onMouseMove, false);
@@ -215,3 +273,39 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 });
+
+async function fetchPlanetData(planetName) {
+    try {
+        // Fetching planet data from the NASA API or another API
+        const response = await fetch('https://api.le-systeme-solaire.net/rest/bodies/');
+        const data = await response.json();
+
+        // Filtering the planets based on the provided name
+        const filteredPlanets = data.bodies.filter(planet => planet.englishName.toLowerCase() === planetName.toLowerCase());
+
+        // Check if any planet is found
+        if (filteredPlanets.length > 0) {
+            console.log(`Found planet: ${JSON.stringify(filteredPlanets[0], null, 2)}`);
+            return filteredPlanets[0]; // Return the first matched planet
+        } else {
+            console.log(`Planet named "${planetName}" not found.`);
+            return null; // No planet found
+        }
+    } catch (error) {
+        console.error('Error fetching planet data:', error);
+    }
+}
+
+
+
+async function displayPlanetInfo(planetData) {
+    const infoDiv = document.getElementById('planet-info');
+    const heading = document.querySelector('.heading');
+    heading.textContent = `${planetData.englishName ? planetData.englishName : 'N/A' }`;
+    infoDiv.innerHTML = `
+        Mass: ${planetData.mass ? planetData.mass : 'N/A'} kg<br>
+        Diameter: ${planetData.meanRadius ? planetData.meanRadius * 2 : 'N/A'} km<br>
+        Distance from Sun: ${planetData.semimajorAxis ? planetData.semimajorAxis : 'N/A'} km<br>
+        <em>${planetData.isPlanet ? 'This is a planet.' : 'This is not a planet.'}</em>
+    `;
+}
