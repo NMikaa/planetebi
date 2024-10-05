@@ -1,3 +1,35 @@
+document.addEventListener("DOMContentLoaded", function () {
+    const text = "How can I help you today?";
+    const h1 = document.querySelector(".prompt-section h1");
+    let index = 0;
+
+    // Clear the h1 content
+    h1.textContent = ""; // Start with an empty text
+
+    function typeText() {
+        if (index < text.length) {
+            // Create a span for each character to allow individual styling
+            const span = document.createElement("span");
+            span.textContent = text.charAt(index);
+            span.style.opacity = 0; // Start with transparent letters
+            h1.appendChild(span); // Append span to h1
+
+            // Delay for each letter with a random factor to simulate the cloud effect
+            const delay = 20; // Base delay with randomness
+
+            setTimeout(() => {
+                span.style.opacity = 1; // Fade in the letter
+                span.style.transition = 'opacity 0.3s ease-in-out'; // Add transition effect
+            }, delay);
+
+            index++;
+            setTimeout(typeText, delay + 100); // Add some delay before typing the next letter
+        }
+    }
+
+    typeText(); // Start typing the text
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const promptInput = document.getElementById('prompt-input');
     const promptSection = document.getElementById('prompt-section');
@@ -54,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     promptInput.value = ""; // Clear the prompt input
     chatInput.value = ""; // Clear the chat input
 }
+
 
 // Function to archive the current chat
 function archiveCurrentChat() {

@@ -9,28 +9,17 @@
   font-style: normal;
 }
 
-/* Typewriter effect styling */
-/* Typewriter effect styling */
 h1 {
-  font-family: 'Inter', sans-serif;
-  white-space: nowrap;
-  overflow: hidden; /* Hides the text while it's being typed */
-  border-right: 3px solid transparent; /* Hide the caret during typing */
-  width: 0; /* Initially, the width is 0 to hide the text */
-  animation: typing 3.5s steps(30, end) forwards, blink-caret 0.75s step-end infinite 3.5s; /* Delay the blinking caret */
+  font-family: 'Gilroy', sans-serif;
+  text-align: center; /* Center the text */
+  white-space: nowrap; /* Prevent wrapping */
+  display: inline-block; /* Ensure the h1 can be affected by individual spans */
 }
 
-/* Typing effect */
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
+.prompt-section {
+  margin-top: 100px;
 }
 
-/* Blinking caret */
-@keyframes blink-caret {
-  from, to { border-color: transparent; } /* Caret is invisible during typing */
-  50% { border-color: black; } /* Blinking effect only starts after typing is done */
-}
 
 
 body {
