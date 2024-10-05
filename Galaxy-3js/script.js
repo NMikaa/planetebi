@@ -1,238 +1,59 @@
-import './style.css'
-import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'dat.gui'
-import { AdditiveBlending, Float32BufferAttribute } from 'three'
+import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
 
-/**
- * Base
- */
-// Debug
-const gui = new dat.GUI({
-    width: 400,
-    closed: true
-})
+// Scene setup
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-const textureLoader = new THREE.TextureLoader()
-const shape = textureLoader.load('/particleShape/1.png')
+// Light (the Sun)
+const light = new THREE.PointLight(0xffffff, 1, 1000);
+light.position.set(0, 0, 0);
+scene.add(light);
 
-// Canvas
-const canvas = document.querySelector('canvas.webgl')
+// Texture loader
+const textureLoader = new THREE.TextureLoader();
 
-// Scene
-const scene = new THREE.Scene()
+// Load Sun texture
+const sunTexture = textureLoader.load('assets/sun.jpg'); // Path to your sun texture file
 
+// Sun (center) with texture
+const sunGeometry = new THREE.SphereGeometry(4, 32, 32);
+const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
+const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+scene.add(sun);
 
-//Galaxy Generator
+// Planets
+const planets = [];
 
-const parameters = {}
+const createPlanet = (radius, distance, texturePath) => {
+  const planetGeometry = new THREE.SphereGeometry(radius, 32, 32);
+  const planetTexture = textureLoader.load(texturePath);
+  const material = new THREE.MeshStandardMaterial({ map: planetTexture });
+  const planet = new THREE.Mesh(planetGeometry, material);
+  planet.position.x = distance;
+  scene.add(planet);
+  return planet;
+};
 
-parameters.count = 70000
-parameters.size = 0.01
-parameters.radius = 5
-parameters.branches = 8
-parameters.spin = 1
-parameters.randomness = 0.3
-parameters.randomnessPower = 5
-parameters.stars = 9000
-parameters.starColor = '#1b3984'
-parameters.insideColor = '#ff6030'
-parameters.outsideColor = '#1b3984'
+// Example planets with texture
+planets.push(createPlanet(0.5, 10, 'path/to/mercury_texture.jpg'));
+planets.push(createPlanet(0.7, 15, 'path/to/venus_texture.jpg'));
+// Add more planets as needed...
 
-gui.add(parameters, 'count').min(100).max(100000).step(100).onChange(generateGalaxy).name('stars in galaxy')
-gui.add(parameters, 'stars').min(0).max(100000).step(100).onChange(generateBgStars).name('background stars')
-gui.addColor(parameters, 'starColor').onChange(generateBgStars).name('color of stars')
-gui.add(parameters, 'size').min(0.001).max(0.1).step(0.001).onChange(generateGalaxy).name('size of stars in galaxy')
-gui.add(parameters, 'radius').min(1).max(10).step(1).onChange(generateGalaxy).name('radius of galaxy')
-gui.add(parameters, 'branches').min(1).max(10).step(1).onChange(generateGalaxy).name('branches in galaxy')
-gui.add(parameters, 'spin').min(-5).max(5).step(0.001).onChange(generateGalaxy).name('spin of the galaxy')
-gui.add(parameters, 'randomness').min(0).max(2).step(0.01).onChange(generateGalaxy)
-gui.add(parameters, 'randomnessPower').min(1).max(10).step(1).onChange(generateGalaxy)
-gui.addColor(parameters, 'insideColor').onChange(generateGalaxy).name('color of core')
-gui.addColor(parameters, 'outsideColor').onChange(generateGalaxy).name('color of branches')
+// Orbiting animation
+function animate() {
+  requestAnimationFrame(animate);
 
+  planets.forEach((planet, index) => {
+    // Basic orbit movement (simplified)
+    planet.position.x = Math.cos(Date.now() * 0.001 * (index + 1)) * (index + 10);
+    planet.position.z = Math.sin(Date.now() * 0.001 * (index + 1)) * (index + 10);
+  });
 
-let bgStarsGeometry = null
-let bgStarsMaterial = null
-let bgStars = null
-
-//Background stars
-function generateBgStars(){
-
-    if(bgStars!==null){
-        bgStarsGeometry.dispose()
-        bgStarsMaterial.dispose()
-        scene.remove(bgStars)
-    }
-
-    bgStarsGeometry = new THREE.BufferGeometry()
-    const bgStarsPositions = new Float32Array(parameters.stars * 3)
-
-    for(let j = 0; j<parameters.stars; j++){
-        bgStarsPositions[j*3 + 0] = (Math.random() - 0.5) * 20
-        bgStarsPositions[j*3 + 1] = (Math.random() - 0.5) * 20
-        bgStarsPositions[j*3 + 2] = (Math.random() - 0.5) * 20
-    }
-
-    bgStarsGeometry.setAttribute('position', new THREE.BufferAttribute(bgStarsPositions, 3))
-
-    bgStarsMaterial = new THREE.PointsMaterial({
-        color: 'white',
-        size: parameters.size,
-        depthWrite: false,
-        sizeAttenuation: true,
-        blending: AdditiveBlending,
-        color: parameters.starColor,
-        transparent: true,
-        alphaMap: shape
-    })
-
-    bgStars = new THREE.Points(bgStarsGeometry, bgStarsMaterial)
-
-    scene.add(bgStars)
+  renderer.render(scene, camera);
 }
 
-generateBgStars()
-
-
-
-
-//gALAXY GENerator
-let geometry = null
-let material = null
-let points = null
-
-
-function generateGalaxy(){
-
-    if(points !== null){
-        geometry.dispose()
-        material.dispose()
-        scene.remove(points)
-    }
-
-    geometry = new THREE.BufferGeometry()
-
-    const positions = new Float32Array(parameters.count *3)
-    const colors = new Float32Array(parameters.count *3)
-
-    const colorInside = new THREE.Color(parameters.insideColor)
-    const colorOutside = new THREE.Color(parameters.outsideColor)
-
-    for(let i=0; i<parameters.count; i++){
-
-        //Position
-        const x = Math.random() * parameters.radius
-        const branchAngle = (i % parameters.branches) / parameters.branches * 2 * Math.PI
-        const spinAngle = x * parameters.spin
-
-        const randomX = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random()<0.5 ? 1: -1) 
-        const randomY = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random()<0.5 ? 1: -1) 
-        const randomZ = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random()<0.5 ? 1: -1)
-
-        positions[i*3] = Math.sin(branchAngle + spinAngle) * x + randomX
-        positions[i*3 + 1] = randomY
-        positions[i*3 + 2] = Math.cos(branchAngle + spinAngle) * x + randomZ
-
-        //Color
-
-        const mixedColor = colorInside.clone()
-        mixedColor.lerp(colorOutside, x / parameters.radius)
-
-        colors[i*3 + 0] = mixedColor.r
-        colors[i*3 + 1] = mixedColor.g
-        colors[i*3 + 2] = mixedColor.b
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-    material = new THREE.PointsMaterial({
-        color: 'white',
-        size: parameters.size,
-        depthWrite: false,
-        sizeAttenuation: true,
-        blending: AdditiveBlending,
-        vertexColors: true,
-        transparent: true,
-        alphaMap: shape
-    })
-
-    points = new THREE.Points(geometry, material)
-    scene.add(points)
-
-
-}
-
-generateGalaxy()
-
-/**
- * Sizes
- */
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
-
-window.addEventListener('resize', () =>
-{
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
-
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
-
-/**
- * Camera
- */
-// Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 3
-camera.position.y = 3
-camera.position.z = 3
-scene.add(camera)
-
-// Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
-
-/**
- * Renderer
- */
-const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
-})
-renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-
-/**
- * Animate
- */
-const clock = new THREE.Clock()
-
-const tick = () =>
-{
-    const elapsedTime = clock.getElapsedTime()
-
-    //Update the camera
-    points.rotation.y = elapsedTime*0.3
-    bgStars.rotation.y = - elapsedTime*0.05
-
-    // Update controls
-    controls.update()
-
-    // Render
-    renderer.render(scene, camera)
-
-    // Call tick again on the next frame
-    window.requestAnimationFrame(tick)
-}
-
-tick()
+camera.position.z = 50;  // Adjust camera for proper view
+animate();

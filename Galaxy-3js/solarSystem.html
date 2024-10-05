@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Solar System with Sun Texture</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Light (the Sun)
+    const light = new THREE.PointLight(0xffffff, 1, 1000);
+    light.position.set(0, 0, 0);
+    scene.add(light);
+
+    // Texture loader
+    const textureLoader = new THREE.TextureLoader();
+
+    // Load Sun texture
+    const sunTexture = textureLoader.load('assets/sun.jpg'); // Path to your sun texture file
+
+    // Sun (center) with texture
+    const sunGeometry = new THREE.SphereGeometry(4, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
+    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    scene.add(sun);
+
+    // Planets array
+    const planets = [];
+
+    // Create planet function
+    const createPlanet = (radius, distance, texturePath) => {
+        const planetGeometry = new THREE.SphereGeometry(radius, 32, 32);
+        const planetTexture = textureLoader.load(texturePath);
+        const material = new THREE.MeshStandardMaterial({ map: planetTexture });
+        const planet = new THREE.Mesh(planetGeometry, material);
+        planet.position.x = distance;
+        scene.add(planet);
+        return planet;
+    };
+
+    // Example planets with textures
+    planets.push(createPlanet(0.4, 10, 'assets/mercury.jpg'));  // Replace with your texture paths
+    planets.push(createPlanet(0.37, 40, 'assets/venus.jpg'));
+    planets.push(createPlanet(0.35, 7, 'assets/mars.jpg'));
+    planets.push(createPlanet(0.3, 15, 'assets/mars.jpg'));
+    planets.push(createPlanet(0.25, 400, 'assets/jupiter.jpg'));
+    planets.push(createPlanet(0.2, 100, 'assets/saturn.jpg'));
+    planets.push(createPlanet(0.12, 25, 'assets/mars.jpg'));
+    planets.push(createPlanet(0.1, 50, 'assets/neptune.jpg'));
+    
+
+    // Orbiting animation
+    function animate() {
+        requestAnimationFrame(animate);
+
+        planets.forEach((planet, index) => {
+            // Basic orbit movement (simplified)
+            planet.position.x = Math.cos(Date.now() * 0.001 * (index + 1)) * (index + 10);
+            planet.position.z = Math.sin(Date.now() * 0.001 * (index + 1)) * (index + 10);
+        });
+
+        renderer.render(scene, camera);
+    }
+
+    // Adjust camera for proper view
+    camera.position.z = 50;
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    });
+
+</script>
+
+</body>
+</html>

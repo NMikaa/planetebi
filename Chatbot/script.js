@@ -26,29 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     });
-
-    // chatInput.addEventListener('keydown', (e) => {
-    //     if (e.key === 'Enter' && chatInput.value.trim() !== '') {
-    //         // Append user's message to chat view
-    //         const userMessage = document.createElement('div');
-    //         userMessage.classList.add('user-message');
-    //         userMessage.textContent = chatInput.value;
-    //         chatMessages.appendChild(userMessage);
-
-    //         // Clear the chat input field
-    //         chatInput.value = '';
-
-    //         // Optionally, simulate a bot response
-    //         setTimeout(() => {
-    //             const botMessage = document.createElement('div');
-    //             botMessage.classList.add('bot-message');
-    //             chatMessages.appendChild(botMessage);
-
-    //             // Scroll to the bottom of chat view
-    //             chatMessages.scrollTop = chatMessages.scrollHeight;
-    //         }, 1000);
-    //     }
-    // });
 });
 
 
