@@ -84,6 +84,7 @@
 
         let planetarySystems = new Map(); // Map to hold planetary systems data
         let planets = [];
+        let orbits = [];
         let planetSpeeds = [];
         let currentStar = null;
         // Function to load random planet textures
@@ -101,55 +102,132 @@
         }
 
         function setupSystem(systemData) {
-            
-            console.log(systemData)
-            if (currentStar) {
-                scene.remove(currentStar);
-                currentStar.geometry.dispose();
-                currentStar.material.dispose();
-                currentStar = null;
-            }
-            
-            planets.forEach(p => {
-                scene.remove(p.mesh);
-                p.mesh.geometry.dispose();
-                p.mesh.material.dispose();
-            });
-            planets = [];
-            planetSpeeds = [];
+    planetSpeeds = [];
+    console.log(systemData)
+    
+    // Remove previous star and planets from the scene
+    if (currentStar) {
+        scene.remove(currentStar);
+        currentStar.geometry.dispose();
+        currentStar.material.dispose();
+        currentStar = null;
+    }
+    
+    planets.forEach(p => {
+        scene.remove(p.mesh);
+        p.mesh.geometry.dispose();
+        p.mesh.material.dispose();
+    });
+    orbits.forEach(p => {
+        scene.remove(p.mesh);
+        p.mesh.geometry.dispose();
+        p.mesh.material.dispose();
+    });
+    planets = [];
+    orbits = [];
+    planetSpeeds = [0.01];
 
-            // Create star (the central "Sun")
-            const starTexture = textureLoader.load('assets/trappist-1/star.jpg');
-            const starGeometry = new THREE.SphereGeometry(systemData[0].star_radius * 2, 32, 32);
-            const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture });
-            currentStar = new THREE.Mesh(starGeometry, starMaterial);
-            currentStar.name = systemData[0].star_name;
-            scene.add(currentStar);
+    // Create star (the central "Sun")
+    const starTexture = textureLoader.load('assets/stars/star1.jpg');
+    const starGeometry = new THREE.SphereGeometry(systemData[0].star_radius * 4, 32, 32);
+    const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture });
+    currentStar = new THREE.Mesh(starGeometry, starMaterial);
+    currentStar.name = systemData[0].star_name;
+    scene.add(currentStar);
 
-            // Create planets
-            systemData.forEach((planetData, index) => {
-                createPlanet(
-                    planetData.planet_radius/2, // Adjust scale 
-                    Math.max((index + 1) * 20,  (index + 1) * 20 + systemData[0].star_radius *2), // Placeholder distance from star
-                    getRandomTexture('assets/trappist-1'), // Random texture from assets
-                    planetData.planet_name,
-                    0.01 // Placeholder speed
-                );
+    // Create planets
+    systemData.forEach((planetData, index) => {
+        // Calculate the distance from the star using star radius
+        const distance = (systemData[0].star_radius * 10) + (index + 1) * 10; // Adjust scaling factor as necessary
+        createPlanet(planetData, distance, planetData.planet_name);
+        planetSpeeds.push(planetSpeeds[planetSpeeds.length - 1] / 2);
+    });
+    console.log(planetSpeeds);
+}
+
+    function createPlanet(planetData, distance, planetName) {
+        let temp = planetData.planet_temperature != null ? planetData.planet_temperature : 
+                calculatePlanetTemperature(planetData.star_temperature, planetData.star_mass, planetData.star_radius, planetData.orbital_period);
+        
+        const type = classifyPlanetByTemperature(temp);
+        const radius = planetData.planet_radius; // Planet radius to be used as is
+        const usedTextures = new Set();
+
+        const availableTextures = planetTextures[type].filter(texture => !usedTextures.has(texture));
+        const randomIndex = Math.floor(Math.random() * availableTextures.length);
+        const selectedTexture = availableTextures[randomIndex];
+
+        const planetGeometry = new THREE.SphereGeometry(radius, 32, 32);
+        const planetTexture = textureLoader.load(selectedTexture);
+        const material = new THREE.MeshStandardMaterial({ map: planetTexture });
+        const planet = new THREE.Mesh(planetGeometry, material);
+        planet.position.x = distance; // Set the planet's distance from the star
+        planet.name = planetName; 
+
+        scene.add(planet);
+        usedTextures.add(selectedTexture); // Mark this texture as used
+        planets.push({ mesh: planet, distance, angle: 0 });
+
+        const orbitGeometry = new THREE.RingGeometry(distance - 0.1, distance + 0.1, 64); 
+        const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+        const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+        orbit.rotation.x = Math.PI / 2;
+        scene.add(orbit);
+        orbits.push({ mesh: orbit, distance, angle: 0 });
+    }
+
+
+        // Global variables
+        const planetTextures = {
+            hot: [],
+            earth_like: [],
+            icy: []
+        };
+
+        // Function to load textures from folders
+        function loadPlanetTextures() {
+            const types = ['hot', 'earth_like', 'icy'];
+            types.forEach(type => {
+                for (let i = 1; i <= 7; i++) {
+                    const texturePath = `assets/${type}/planet${i}.png`;
+                    planetTextures[type].push(texturePath);
+                }
             });
         }
+        loadPlanetTextures();
 
-        // Create a planet with specified parameters
-        function createPlanet(radius, distance, texturePath, name, speed) {
-            const planetGeometry = new THREE.SphereGeometry(radius, 32, 32);
-            const planetTexture = textureLoader.load(texturePath);
-            const material = new THREE.MeshStandardMaterial({ map: planetTexture });
-            const planet = new THREE.Mesh(planetGeometry, material);
-            planet.position.x = distance;
-            planet.name = name;
-            scene.add(planet);
+        // Function to classify the planet based on temperature
+        function classifyPlanetByTemperature(temperature) {
+            if (temperature > 310) {
+                return 'hot';
+            } else if (temperature > 200 && temperature <= 310) {
+                return 'earth_like';
+            } else {
+                return 'icy';
+            }
+        }
 
-            planets.push({ mesh: planet, distance, angle: 0 });
-            planetSpeeds.push(speed);
+
+        function calculatePlanetTemperature(starTemperature, starMassSolar, starRadiusSolar, orbitalPeriodDays, albedo = 0.3) {
+            const G = 6.67430e-11;  // Gravitational constant in m^3 kg^-1 s^-2
+            const solarMassKg = 1.989e30;  // Mass of the Sun in kg
+            const solarRadiusM = 6.96e8;  // Radius of the Sun in meters
+
+            // Convert star mass and radius to SI units (kg and meters)
+            const starMassKg = starMassSolar * solarMassKg;
+            const starRadiusM = starRadiusSolar * solarRadiusM;
+
+            // Convert orbital period to seconds
+            const orbitalPeriodSeconds = orbitalPeriodDays * 86400;
+
+            // Kepler's 3rd law to find the semi-major axis 'a'
+            const aCubed = (G * starMassKg * Math.pow(orbitalPeriodSeconds, 2)) / (4 * Math.pow(Math.PI, 2));
+            const semiMajorAxis = Math.pow(aCubed, 1 / 3);
+
+            // Calculate the planet temperature using the equilibrium temperature formula
+            const planetTemperature = starTemperature * Math.sqrt(starRadiusM / (2 * semiMajorAxis)) * Math.pow((1 - albedo), 0.25);
+
+            return planetTemperature;
         }
 
         // Display planet information
