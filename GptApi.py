@@ -1,9 +1,4 @@
-import os
 from dotenv import load_dotenv, find_dotenv
-import json
-import requests
-import numpy as np
-import pandas as pd
 load_dotenv(find_dotenv())
 import os
 import requests
@@ -134,21 +129,86 @@ class PlanetAssistant:
             'habitable': habitable
         }
 
+    def map_features_to_text(self, features):
+        """
+        Convert numeric features to more general textual descriptions to avoid DALL-E generating text.
+        """
+        # Mapping mass to descriptive terms
+        if features['approximate_mass_earth_masses'] < 1:
+            mass_description = "smaller than Earth"
+        elif 1 <= features['approximate_mass_earth_masses'] <= 5:
+            mass_description = "similar in mass to Earth"
+        else:
+            mass_description = "much larger than Earth"
+
+        # Mapping gravity to descriptive terms
+        if features['gravity_earth_g'] < 1:
+            gravity_description = "weaker gravity than Earth"
+        elif 1 <= features['gravity_earth_g'] <= 1.5:
+            gravity_description = "similar to Earth's gravity"
+        else:
+            gravity_description = "stronger gravity than Earth"
+
+        # Mapping orbital period to descriptive terms
+        if features['orbital_period_years'] < 1:
+            orbital_period_description = "a quick orbit around its star"
+        elif 1 <= features['orbital_period_years'] <= 5:
+            orbital_period_description = "a moderate orbit around its star"
+        else:
+            orbital_period_description = "a long orbit around its star"
+
+        # Mapping temperature to descriptive terms
+        temperature_description = features.get('approximate_temperature', 'temperate climate')
+
+        # Mapping distance to descriptive terms
+        if features['orbital_distance_au'] < 1:
+            distance_description = "very close to its star"
+        elif 1 <= features['orbital_distance_au'] <= 2:
+            distance_description = "moderately distant from its star"
+        else:
+            distance_description = "far from its star"
+
+        # Habitability description
+        habitability_description = "located in the habitable zone" if features[
+            'habitable'] else "outside the habitable zone"
+
+        return {
+            "mass": mass_description,
+            "gravity": gravity_description,
+            "orbital_period": orbital_period_description,
+            "temperature": temperature_description,
+            "distance": distance_description,
+            "habitability": habitability_description
+        }
+
     def get_dalle_prompt(self):
         """
-        Generate a DALL-E prompt based on the stored conversation state features.
+        Generate a DALL-E prompt based on all the features of the planet, using lexicographical descriptions
+        instead of numbers to avoid text generation in the image.
         """
         base_features = self.conversation_state['features']
         additional_features = base_features.get('additional_features', [])
 
-        # Start with the main planet description
-        prompt = f"Generate an image of a {base_features['planet_size']} {base_features['planet_type']} planet, which is {base_features['planet_color']} and has a temperature of {base_features['approximate_temperature']}."
+        # Convert numeric features to descriptive text
+        descriptive_features = self.map_features_to_text(base_features)
+
+        # Build the prompt by incorporating all features without using exact numbers
+        prompt = (
+            f"Generate an artistic and realistic image of a {base_features['planet_size']} "
+            f"{base_features['planet_type']} planet. The planet is {base_features['planet_color']}, "
+            f"with a {descriptive_features['temperature']}, "
+            f"and a mass that is {descriptive_features['mass']}, "
+            f"with {descriptive_features['gravity']}, "
+            f"{descriptive_features['orbital_period']}, "
+            f"and {descriptive_features['distance']} from its star. "
+            f"The planet is {descriptive_features['habitability']}."
+            " The image should not include any text, symbols, labels, or written elements."
+        )
 
         # Add additional features if present
         if additional_features:
             prompt += " It also includes " + ", ".join(additional_features) + "."
 
-        # Return the full prompt
         return prompt
 
     def add_to_prompt(self, addition):

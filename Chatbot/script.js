@@ -4,9 +4,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatView = document.getElementById('chat-view');
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
-
     let isWaitingForBot = false;
 
+    // Add loader during bot response
+    function showLoader() {
+        const loader = document.createElement('div');
+        loader.classList.add('bot-message');
+        loader.id = 'loading';
+        loader.textContent = 'Generating...';
+        chatMessages.appendChild(loader);
+        chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+    }
+
+    // Remove loader after bot response
+    function removeLoader() {
+        const loader = document.getElementById('loading');
+        if (loader) {
+            loader.remove();
+        }
+    }
+
+    // Function to display messages (user or bot)
+    function displayMessage(message, sender) {
+        const messageElement = document.createElement("div");
+        messageElement.className = sender === "user" ? "user-message" : "bot-message";
+        messageElement.textContent = message;
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+    }
+
+    // Function to display image in chat
+    function displayImage(imageUrl) {
+        const botMessage = document.createElement('img');
+        botMessage.src = imageUrl;
+        botMessage.classList.add('bot-image');  // Optional: Add a class for styling
+        botMessage.style.maxWidth = '300px';    // Limit image size without affecting quality
+        botMessage.style.height = 'auto';       // Maintain aspect ratio
+        chatMessages.appendChild(botMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+    }
+
+    // Event listener for the initial prompt
     promptInput.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter' && promptInput.value.trim() !== '' && !isWaitingForBot) {
             isWaitingForBot = true;
@@ -17,111 +55,75 @@ document.addEventListener('DOMContentLoaded', () => {
                 chatView.style.display = 'block';
                 chatInput.style.display = 'block';
 
-                // Append the initial prompt to the chat messages
-                const userMessage = document.createElement('div');
-                userMessage.classList.add('user-message');
-                userMessage.textContent = promptInput.value;
-                chatMessages.appendChild(userMessage);
+                // Display user message
+                displayMessage(promptInput.value, "user");
 
-                // Scroll to the bottom of chat view
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                // Show typing indicator
+                showLoader();
 
                 // Send the prompt to the server
                 const response = await fetch("http://127.0.0.1:8000/start_of_conversation/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ user_input: promptInput.value }),  // Properly format the body as JSON
-            });
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ user_input: promptInput.value }),
+                });
 
-            if (response.ok) {
-                // Get the image from the response as a blob
-                const blob = await response.blob();
-
-                // Create an object URL for the image
-                const imageUrl = URL.createObjectURL(blob);
-
-                // Create an image element and set its source to the image URL
-                const botMessage = document.createElement('img');
-                botMessage.src = imageUrl;
-                botMessage.classList.add('bot-image');  // Optional: Add a class for styling
-
-                // Append the image to the chat messages
-                chatMessages.appendChild(botMessage);
-            }
+                // Handle bot response
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    removeLoader();  // Remove typing indicator
+                    displayImage(imageUrl);  // Display the image in chat
+                }
 
             } catch (error) {
                 console.error('Error fetching bot response:', error);
+                removeLoader();
             } finally {
-                // Ensure flag is reset even if there's an error
                 isWaitingForBot = false;
                 chatInput.focus();
             }
         }
     });
 
+    // Event listener for chat input (continuation of conversation)
     chatInput.addEventListener("keypress", async function (e) {
         if (e.key === "Enter" && !isWaitingForBot) {
             const userMessage = e.target.value.trim();
-
-            if (userMessage === "") {
-                return; // Stop the function if the input is empty
-            }
+            if (userMessage === "") return;
 
             isWaitingForBot = true;
             try {
-                // Display user message in chat view
                 displayMessage(userMessage, "user");
                 e.target.value = "";
+                showLoader();
 
-                // Send the user message to the FastAPI server
+                // Send user message to the server
                 const response = await fetch("http://127.0.0.1:8000/continue_conversation/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ user_input: userMessage }),
-        });
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ user_input: userMessage }),
+                });
 
-        if (response.ok) {
-            // Get the image from the response as a blob
-            const blob = await response.blob();
-
-            // Create an object URL for the image
-            const imageUrl = URL.createObjectURL(blob);
-
-            // Create an image element and set its source to the image URL
-            const botMessage = document.createElement('img');
-            botMessage.src = imageUrl;
-            botMessage.classList.add('bot-image');  // Optional: Add a class for styling
-
-            // Append the image to the chat messages
-            chatMessages.appendChild(botMessage);
-            }
+                // Handle bot response
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    removeLoader();  // Remove typing indicator
+                    displayImage(imageUrl);  // Display the image in chat
+                }
 
             } catch (error) {
                 console.error('Error fetching bot response:', error);
+                removeLoader();
             } finally {
-                // Ensure flag is reset even if there's an error
                 isWaitingForBot = false;
                 chatInput.focus();
             }
         }
     });
 });
-
-function displayMessage(message, sender) {
-    const chatMessages = document.getElementById("chat-messages");
-    const messageElement = document.createElement("div");
-
-    if (sender === "user") {
-        messageElement.className = "user-message";
-    } else {
-        messageElement.className = "bot-message";
-    }
-
-    messageElement.textContent = message;
-    chatMessages.appendChild(messageElement);
-    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
-}
