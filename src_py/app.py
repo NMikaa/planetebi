@@ -1,13 +1,20 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from GptApi import PlanetAssistant
+from src_py.GptApi import PlanetAssistant  # Import the PlanetAssistant class
 import pandas as pd
 import requests
 from io import BytesIO
 from starlette.responses import StreamingResponse
-import motor.motor_asyncio  # <-- Added motor for MongoDB
-from bson import ObjectId  # <-- For working with MongoDB object IDs
+import motor.motor_asyncio  # For MongoDB
+from bson import ObjectId  # For working with MongoDB object IDs
+import openai
+import os
+from dotenv import load_dotenv, find_dotenv
+
+# Load environment variables (e.g., OpenAI API key)
+load_dotenv(find_dotenv())
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Load your data
 df = pd.read_csv('Data/merged.csv')
@@ -18,11 +25,12 @@ app = FastAPI()
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins, can be changed to specific domain
+    allow_origins=["*"],  # Allows all origins; change as needed
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods (POST, GET, OPTIONS, etc.)
+    allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
 )
+
 # Create a global instance of PlanetAssistant that can be switched
 current_assistant = PlanetAssistant()
 
@@ -32,10 +40,14 @@ client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URL)
 db = client.chat_db  # Database name
 conversations_collection = db.conversations  # Collection name
 
-# Define the request model
+# Define the request models
 class UserInputModel(BaseModel):
     user_input: str
 
+class FeaturesModel(BaseModel):
+    temperature: str
+    type: str
+    color: str
 
 # Helper function to save conversation
 async def save_conversation(user_input, bot_response):
@@ -46,7 +58,6 @@ async def save_conversation(user_input, bot_response):
     result = await conversations_collection.insert_one(conversation_data)
     return str(result.inserted_id)  # Return the ID of the inserted conversation
 
-
 @app.post("/switch_convo/")
 def switch_convo():
     """
@@ -56,11 +67,10 @@ def switch_convo():
     current_assistant = PlanetAssistant()  # Create a new instance of PlanetAssistant
     return {"message": "Switched to a new conversation. You can now start fresh."}
 
-
 @app.post("/start_of_conversation/")
 async def start_of_conversation(user_input: UserInputModel):
     """
-    Start or continue the current conversation using the globally tracked PlanetAssistant.
+    Start the conversation using the globally tracked PlanetAssistant.
     """
     global current_assistant
     try:
@@ -86,16 +96,15 @@ async def start_of_conversation(user_input: UserInputModel):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.post("/continue_conversation/")
 async def continue_conversation(user_input: UserInputModel):
     """
-    Continue the current conversation using the globally tracked PlanetAssistant.
+    Continue the conversation using the globally tracked PlanetAssistant.
     """
     global current_assistant
     try:
         # Add more information to the conversation
-        current_assistant.add_to_prompt(user_input.user_input)
+        current_assistant.continue_conversation(user_input.user_input)
 
         # Finalize and get the image URL
         image_url = current_assistant.finalize_conversation()
@@ -111,6 +120,53 @@ async def continue_conversation(user_input: UserInputModel):
                 return StreamingResponse(img, media_type="image/png")
             else:
                 raise HTTPException(status_code=500, detail="Failed to download the image")
+        else:
+            raise HTTPException(status_code=500, detail="Image generation failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate_image/")
+async def generate_image(features: FeaturesModel):
+    """
+    Generate an image based on the provided features using the predefined prompt.
+    """
+    second_assistant = PlanetAssistant()
+
+    try:
+        # Extract values from the features
+        temperature = features.temperature or 'temperate'
+        planet_type = features.type or 'terrestrial'
+        color = features.color or 'earthy'
+
+        # Predefined prompt with placeholders
+        prompt_template = (
+            "The image presents a panoramic view of a [temperature] [type] planet, "
+            "highlighted in a palette of [color] tones. It captures the dynamic and complex "
+            "surface and atmospheric features, conveying a sense of depth and motion. "
+            "The planet is centrally positioned in the composition. don't generate any shadows in this picture."
+        )
+
+        # Replace placeholders with actual values
+        prompt = prompt_template.replace('[temperature]', temperature)
+        prompt = prompt.replace('[type]', planet_type)
+        prompt = prompt.replace('[color]', color)
+
+        # Generate the image URL
+        image_url = second_assistant.generate_dalle_image(prompt=prompt)
+        print(image_url, "this is main image url")
+
+        # Preprocess the image
+        image = second_assistant.preprocess_dalle_image(image_url)  # Use the standalone function
+
+        if image:
+            # Convert the image to bytes
+            img_bytes = BytesIO()
+            image.save(img_bytes, format='PNG')
+            img_bytes.seek(0)
+
+            # Return the image as a StreamingResponse
+            return StreamingResponse(img_bytes, media_type="image/png")
         else:
             raise HTTPException(status_code=500, detail="Image generation failed")
     except Exception as e:

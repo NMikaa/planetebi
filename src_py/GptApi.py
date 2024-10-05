@@ -5,6 +5,8 @@ import requests
 import json
 import numpy as np
 import pandas as pd
+from PIL import Image
+from io import BytesIO
 
 class PlanetAssistant:
     def __init__(self):
@@ -275,6 +277,47 @@ class PlanetAssistant:
         image_url = self.generate_dalle_image(dalle_prompt)
         return image_url
 
+    def preprocess_dalle_image(self, image_url):
+        response = requests.get(image_url)
+        image = Image.open(BytesIO(response.content))
+
+        # Get image dimensions
+        width, height = image.size
+
+        # Desired aspect ratio and zoom level
+        aspect_ratio = 16 / 9  # Width:Height ratio
+        zoom_factor = 0.3  # Fraction of width to use (smaller value = more zoom)
+
+        # Calculate crop dimensions
+        crop_width = width * zoom_factor
+        crop_height = crop_width / aspect_ratio
+
+        # Ensure crop_height does not exceed the original height
+        if crop_height > height:
+            crop_height = height
+            crop_width = crop_height * aspect_ratio
+
+        shift_y = 0
+        shift_x = 0
+
+        # Calculate coordinates
+        left = (width - crop_width) / 2 + shift_x
+        top = (height - crop_height) / 2 + shift_y
+        right = left + crop_width
+        bottom = top + crop_height
+
+        # Ensure coordinates are within image bounds
+        left = max(0, left)
+        top = max(0, top)
+        right = min(width, right)
+        bottom = min(height, bottom)
+
+        # Crop the image
+        cropped_image = image.crop((left, top, right, bottom))
+
+        cropped_image.save("processed_image.png")
+
+        return cropped_image
 
 # Example Usage
 
