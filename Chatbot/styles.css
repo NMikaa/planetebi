@@ -80,18 +80,19 @@ body {
 .archive-button {
   margin: 5px 0; /* Spacing between buttons */
   padding: 8px; /* Reduced padding for smaller buttons */
-  background: rgb(84, 177, 84); /* Light green background */
+  background: rgba(0, 102, 191, 0.5); /* Light green background */
   color: white; /* White text */
   border: none; /* Remove border */
   border-radius: 0; /* No rounded corners */
   cursor: pointer; /* Cursor pointer for buttons */
   transition: background 0.3s; /* Transition for hover effect */
   width: 100%; /* Full width of the container */
+  border-radius: 15px;
   text-align: center; /* Center the text */
 }
 
 .archive-button:hover {
-  background: #66bb6a; /* Darker green for hover effect */
+  background: rgb(15, 111, 145); /* Darker green for hover effect */
 }
 
 .new-chat {
@@ -220,8 +221,9 @@ body {
 #chat-input {
   width: calc(100% - 100px);
   padding: 10px;
-  margin-top: 10px;
-  border-radius: 5px;
+  /* margin-top: 10px; */
+  /* margin-bottom: 20px; */
+  border-radius: 15px;
   border: 1px solid #ccc;
 }
 
