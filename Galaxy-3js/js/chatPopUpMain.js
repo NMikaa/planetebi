@@ -27,66 +27,68 @@
             const message = chatInput.value.trim();
             if (message) {
                 addMessage(message); // Add message to the chat on the right side
-                
+    
+                // Show the typing indicator
+                const typingIndicator = document.getElementById("typing-indicator");
+                typingIndicator.style.display = "flex"; // Use flex to keep the dots in a row
+
+    
                 // Assuming you have a way to get the current thread ID
-                if(firstMessage){                          
+                if (firstMessage) {
                     try {
                         const response = await fetch("http://127.0.0.1:8000/message/", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({message: message}),
+                            body: JSON.stringify({ message: message }),
                         });
-        
-                        // Check if the response is okay
+    
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
                         }
-        
-                        const data = await response.json(); // Parse the JSON response
-                        const answer = data.assistant_response; // Extract the answer from the response
-                        currentThreadId = data.id; // Extract the thread ID from the response
+    
+                        const data = await response.json();
+                        const answer = data.assistant_response;
+                        currentThreadId = data.id;
                         firstMessage = false;
                         addResponse(answer); // Add the response to the chat
                     } catch (error) {
                         console.error('Error fetching response:', error);
-                        addResponse('An error occurred. Please try again later.'); // Optionally handle errors
+                        addResponse('An error occurred. Please try again later.');
+                    } finally {
+                        // Hide the typing indicator after the response is received
+                        typingIndicator.style.display = "none";
                     }
-                }
-                else{
+                } else {
                     try {
-                        console.log(currentThreadId)
                         const response = await fetch("http://127.0.0.1:8000/message/", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ message: message, id: currentThreadId}),
+                            body: JSON.stringify({ message: message, id: currentThreadId }),
                         });
-                        console.log('patronimetkvneba mishvelet agar shemidzlia')
-                        // Check if the response is okay
+    
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
                         }
-        
-                        const data = await response.json(); // Parse the JSON response
-                        const answer = data.assistant_response; // Extract the answer from the response
-                        currentThreadId = data.id; // Extract the thread ID from the response
-                        console.log(answer);
-                        
-                        addResponse(answer); // Add the response to the chat
-                        currentThreadId = data.id; // Update the thread ID for future messages
+    
+                        const data = await response.json();
+                        const answer = data.assistant_response;
+                        currentThreadId = data.id;
+                        addResponse(answer);
                     } catch (error) {
                         console.error('Error fetching response:', error);
-                        addResponse('An error occurred. Please try again later.'); // Optionally handle errors
+                        addResponse('An error occurred. Please try again later.');
+                    } finally {
+                        // Hide the typing indicator after the response is received
+                        typingIndicator.style.display = "none";
                     }
                 }
-
                 firstMessage = false;
-                
             }
-            e.preventDefault(); // Prevent default behavior of form submission
+            e.preventDefault();
         }
     });
 
