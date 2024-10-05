@@ -113,37 +113,6 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-async function onClick(event) {
-    raycaster.setFromCamera(mouse, camera);
-    const objectsToCheck = [...planets.map(p => p.mesh), sun]
-    console.log(objectsToCheck)
-    const intersects = raycaster.intersectObjects(objectsToCheck);
-
-    if (intersects.length > 0) {
-        const planetname = intersects[0].object.name;
-        const planetData = await fetchPlanetData(planetname);
-        selectedPlanet = intersects[0].object;
-        targetCameraPosition.set(selectedPlanet.position.x, selectedPlanet.position.y, selectedPlanet.position.z + 10); // Zoom in
-        displayPlanetInfo(JSON.stringify(planetData))
-        displayPlanetInfo(planetData)
-        
-    } else {
-        const infoDiv = document.getElementById('planet-info');
-        const title = document.querySelector('.heading');
-        infoDiv.textContent = "Click on a planet to see its information"
-        title.textContent = 'Solar System'
-        selectedPlanet = null;
-        targetCameraPosition.set(0, 20, 50); // Your default camera position
-        camera.position.copy(targetCameraPosition); // Reset the camera position
-    
-        // Reset the OrbitControls target (important)
-        controls.target.set(0, 0, 0); // Reset target to center of the system or any desired point
-        controls.update(); // Ensure the controls recognize the change
-    
-        console.log("Esc key pressed!");
-        // You can call another function or perform an action here
-    }
-}
 
 function focusOnSelectedPlanet() {
     if (selectedPlanet) {
@@ -223,28 +192,6 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 });
 
-async function fetchPlanetData(planetName) {
-    try {
-        // Fetching planet data from the NASA API or another API
-        const response = await fetch('https://api.le-systeme-solaire.net/rest/bodies/');
-        const data = await response.json();
-
-        // Filtering the planets based on the provided name
-        const filteredPlanets = data.bodies.filter(planet => planet.englishName.toLowerCase() === planetName.toLowerCase());
-
-        // Check if any planet is found
-        if (filteredPlanets.length > 0) {
-            console.log(`Found planet: ${JSON.stringify(filteredPlanets[0], null, 2)}`);
-            return filteredPlanets[0]; // Return the first matched planet
-        } else {
-            console.log(`Planet named "${planetName}" not found.`);
-            return null; // No planet found
-        }
-    } catch (error) {
-        console.error('Error fetching planet data:', error);
-    }
-}
-
 
 
 async function displayPlanetInfo(planetData) {
@@ -257,4 +204,69 @@ async function displayPlanetInfo(planetData) {
         Distance from Sun: ${planetData.semimajorAxis ? planetData.semimajorAxis : 'N/A'} km<br>
         <em>${planetData.isPlanet ? 'This is a planet.' : 'This is not a planet.'}</em>
     `;
+}
+
+
+let planetDataCache = []; // Global cache for planet data
+
+// Fetch planet data and store it in cache
+async function fetchPlanetData() {
+    try {
+        const response = await fetch('https://api.le-systeme-solaire.net/rest/bodies/');
+        const data = await response.json();
+        planetDataCache = data.bodies; // Store all planet data globally
+    } catch (error) {
+        console.error('Error fetching planet data:', error);
+    }
+}
+
+// Filter planet data by name from cache
+function getPlanetDataByName(planetName) {
+    const filteredPlanets = planetDataCache.filter(
+        planet => planet.englishName.toLowerCase() === planetName.toLowerCase()
+    );
+    return filteredPlanets.length > 0 ? filteredPlanets[0] : null;
+}
+
+// Call this once during scene initialization
+fetchPlanetData();
+
+// Modify the onClick function to use the cached data
+async function onClick(event) {
+    raycaster.setFromCamera(mouse, camera);
+    const objectsToCheck = [...planets.map(p => p.mesh), sun];
+    const intersects = raycaster.intersectObjects(objectsToCheck);
+
+    if (intersects.length > 0) {
+        const planetName = intersects[0].object.name;
+        const planetData = getPlanetDataByName(planetName); // Use cached data
+        if (planetData) {
+            selectedPlanet = intersects[0].object;
+            targetCameraPosition.set(
+                selectedPlanet.position.x,
+                selectedPlanet.position.y,
+                selectedPlanet.position.z + 10
+            ); // Zoom in
+            displayPlanetInfo(planetData);
+        } else {
+            console.log(`Planet named "${planetName}" not found.`);
+        }
+    } else {
+        resetCamera();
+    }
+}
+
+// Function to reset camera and controls
+function resetCamera() {
+    const infoDiv = document.getElementById('planet-info');
+    const title = document.querySelector('.heading');
+    infoDiv.textContent = "Click on a planet to see its information";
+    title.textContent = 'Solar System';
+    selectedPlanet = null;
+    targetCameraPosition.set(0, 20, 50); // Your default camera position
+    camera.position.copy(targetCameraPosition); // Reset the camera position
+
+    // Reset the OrbitControls target (important)
+    controls.target.set(0, 0, 0); // Reset target to center of the system
+    controls.update(); // Ensure the controls recognize the change
 }
