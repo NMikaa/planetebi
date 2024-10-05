@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from GptApi import PlanetAssistant
@@ -6,6 +6,8 @@ import pandas as pd
 import requests
 from io import BytesIO
 from starlette.responses import StreamingResponse
+import motor.motor_asyncio  # <-- Added motor for MongoDB
+from bson import ObjectId  # <-- For working with MongoDB object IDs
 
 # Load your data
 df = pd.read_csv('Data/merged.csv')
@@ -24,9 +26,25 @@ app.add_middleware(
 # Create a global instance of PlanetAssistant that can be switched
 current_assistant = PlanetAssistant()
 
+# MongoDB setup
+MONGODB_URL = "mongodb://localhost:27017"  # Replace with your MongoDB connection string
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URL)
+db = client.chat_db  # Database name
+conversations_collection = db.conversations  # Collection name
+
 # Define the request model
 class UserInputModel(BaseModel):
     user_input: str
+
+
+# Helper function to save conversation
+async def save_conversation(user_input, bot_response):
+    conversation_data = {
+        "user_input": user_input,
+        "bot_response": bot_response
+    }
+    result = await conversations_collection.insert_one(conversation_data)
+    return str(result.inserted_id)  # Return the ID of the inserted conversation
 
 
 @app.post("/switch_convo/")
@@ -40,7 +58,7 @@ def switch_convo():
 
 
 @app.post("/start_of_conversation/")
-def start_of_conversation(user_input: UserInputModel):
+async def start_of_conversation(user_input: UserInputModel):
     """
     Start or continue the current conversation using the globally tracked PlanetAssistant.
     """
@@ -57,6 +75,8 @@ def start_of_conversation(user_input: UserInputModel):
             if response.status_code == 200:
                 # Read the image content
                 img = BytesIO(response.content)
+                # Save the conversation to MongoDB
+                await save_conversation(user_input.user_input, image_url)
                 # Return the image as a streaming response
                 return StreamingResponse(img, media_type="image/png")
             else:
@@ -68,7 +88,7 @@ def start_of_conversation(user_input: UserInputModel):
 
 
 @app.post("/continue_conversation/")
-def continue_conversation(user_input: UserInputModel):
+async def continue_conversation(user_input: UserInputModel):
     """
     Continue the current conversation using the globally tracked PlanetAssistant.
     """
@@ -85,6 +105,8 @@ def continue_conversation(user_input: UserInputModel):
             if response.status_code == 200:
                 # Read the image content
                 img = BytesIO(response.content)
+                # Save the conversation to MongoDB
+                await save_conversation(user_input.user_input, image_url)
                 # Return the image as a streaming response
                 return StreamingResponse(img, media_type="image/png")
             else:

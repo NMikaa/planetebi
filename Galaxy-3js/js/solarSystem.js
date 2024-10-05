@@ -29,7 +29,7 @@ scene.add(backgroundSphere);
 
 
 // Light (the Sun)
-const light = new THREE.PointLight(0xffffff, 1, 1000);
+const light = new THREE.PointLight(0xffffff, 0.5, 0);
 light.position.set(0, 0, 0);
 scene.add(light);
 
