@@ -187,6 +187,33 @@
             left: 5%;
             color: aliceblue;
         }
+
+        .play-button-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        .play-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .play-button:hover {
+            background-color: #0056b3;
+        }
+
     </style>
 </head>
 <body>
@@ -217,6 +244,12 @@
             
         </div>
     </div>
+    
+    <!-- Play Button -->
+    <div class="play-button-container">
+        <button id="play-button" class="play-button">❚❚</button>
+    </div>
+
     <button id="chat-button" class="chat-button">
         <img src="https://img.icons8.com/material-outlined/24/ffffff/chat.png" alt="Chat Icon">
     </button>

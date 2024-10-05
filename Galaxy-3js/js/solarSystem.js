@@ -60,7 +60,7 @@ const createPlanet = (radius, distance, texturePath, name, speed) => {
     scene.add(planet);
 
     // Add a light for the planet
-    const planetLight = new THREE.PointLight(0xffffff, 0.5, 100);
+    const planetLight = new THREE.PointLight(0xffffff, 0.5, 1);
     planetLight.position.set(distance, 0, 0);
     scene.add(planetLight);
 
@@ -85,9 +85,10 @@ createPlanet(4.38, 65, 'assets/saturn.jpg', 'Saturn', 0.0002);
 createPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.0015);  
 createPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.001);  
 
-
+let isAnimating = true;
 // Orbiting animation
 function animate() {
+    if (!isAnimating) return;
     requestAnimationFrame(animate);
 
     planets.forEach((planet, index) => {
@@ -274,19 +275,25 @@ fetchPlanetData();
 
 // Modify the onClick function to use the cached data
 async function onClick(event) {
+    
     raycaster.setFromCamera(mouse, camera);
     const objectsToCheck = [...planets.map(p => p.mesh), sun];
     const intersects = raycaster.intersectObjects(objectsToCheck);
 
     if (intersects.length > 0) {
+        isPlaying = true // Toggle play state
+        
+        playButton.textContent = "❚❚"; // Change button to pause icon
+        toggleAnimation(true); // Call your function to start or continue the animation
+        
         const planetName = intersects[0].object.name;
         const planetData = getPlanetDataByName(planetName); // Use cached data
         if (planetData) {
             selectedPlanet = intersects[0].object;
             targetCameraPosition.set(
-                selectedPlanet.position.x,
-                selectedPlanet.position.y,
-                selectedPlanet.position.z + 10
+                selectedPlanet.position.x + selectedPlanet.geometry.parameters.radius * 2,
+                selectedPlanet.position.y + selectedPlanet.geometry.parameters.radius * 2,
+                selectedPlanet.position.z + selectedPlanet.geometry.parameters.radius * 1
             ); // Zoom in
             displayPlanetInfo(planetData);
             console.log(planetData)
@@ -312,3 +319,54 @@ function resetCamera() {
     controls.target.set(0, 0, 0); // Reset target to center of the system
     controls.update(); // Ensure the controls recognize the change
 }
+
+
+
+
+
+// Get the play button
+const playButton = document.getElementById("play-button");
+
+// Variable to track play state
+let isPlaying = true;
+
+// Add event listener for the play button
+playButton.addEventListener("click", () => {
+    isPlaying = !isPlaying; // Toggle play state
+    if (isPlaying) {
+        playButton.textContent = "❚❚"; // Change button to pause icon
+        toggleAnimation(true); // Call your function to start or continue the animation
+    } else {
+        playButton.textContent = "▶"; // Change button to play icon
+        toggleAnimation(false); // Call your function to pause the animation
+    }
+});
+
+// Function to control animation (replace with your actual implementation)
+function toggleAnimation(play) {
+    if (play) {
+        isAnimating = true;
+        animate();
+        console.log("Animation started");
+        // Your animation start logic here
+    } else {
+        // Pause the animation
+        isAnimating = false;
+        console.log("Animation paused");
+        // Your animation pause logic here
+    }
+}
+
+
+window.addEventListener('keyup',(event)=>{
+    if(event.code == "Space"){
+        isPlaying = !isPlaying; // Toggle play state
+        if (isPlaying) {
+            playButton.textContent = "❚❚"; // Change button to pause icon
+            toggleAnimation(true); // Call your function to start or continue the animation
+        } else {
+            playButton.textContent = "▶"; // Change button to play icon
+            toggleAnimation(false); // Call your function to pause the animation
+        }
+    }
+})
