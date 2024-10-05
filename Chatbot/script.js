@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
 
-    promptInput.addEventListener('keydown', (e) => {
+    promptInput.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter' && promptInput.value.trim() !== '') {
             // Hide the prompt section and show the chat view and input
             promptSection.style.display = 'none';
@@ -18,6 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
             userMessage.classList.add('user-message');
             userMessage.textContent = promptInput.value;
             chatMessages.appendChild(userMessage);
+            
+            const response = await fetch("http://localhost:8000/send_message/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ message: promptInput.value }),
+            });
+    
+            const data = await response.json();
+            const botMessage = data.response;
+    
+            // Display bot message in chat view
+            displayMessage(botMessage, "bot");
+
 
             // Clear the prompt input field
             promptInput.value = '';
