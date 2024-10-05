@@ -40,6 +40,7 @@ const sunTexture = textureLoader.load('assets/sun.jpg');
 const sunGeometry = new THREE.SphereGeometry(6, 32, 32);
 const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+sun.name = 'Sun';
 scene.add(sun);
 
 // Planets array and orbit speeds
@@ -115,12 +116,12 @@ function onMouseMove(event) {
 async function onClick(event) {
     raycaster.setFromCamera(mouse, camera);
     const objectsToCheck = [...planets.map(p => p.mesh), sun]
+    console.log(objectsToCheck)
     const intersects = raycaster.intersectObjects(objectsToCheck);
 
     if (intersects.length > 0) {
         const planetname = intersects[0].object.name;
         const planetData = await fetchPlanetData(planetname);
-        alert(planetname)
         selectedPlanet = intersects[0].object;
         targetCameraPosition.set(selectedPlanet.position.x, selectedPlanet.position.y, selectedPlanet.position.z + 10); // Zoom in
         displayPlanetInfo(JSON.stringify(planetData))
@@ -150,10 +151,6 @@ function focusOnSelectedPlanet() {
         camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
         controls.target.lerp(selectedPlanet.position, 0.05); // Focus the controls' target to the planet
         controls.update();
-    } else{
-        // camera.position.lerp(targetCameraPosition, 0.05); // Interpolate the camera position (adjust the speed with 0.05)
-        // controls.target.lerp(sun.position, 0.05); // Focus the controls' target to the planet
-        // controls.update();
     }
     
 }
