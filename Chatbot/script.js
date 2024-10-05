@@ -31,10 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.getElementById('chat-input').addEventListener("keypress", async function (e) {
     if (e.key === "Enter") {
-        const userMessage = e.target.value;
+        const userMessage = e.target.value.trim();
 
+        if (userMessage === "") {
+            return; // Stop the function if the input is empty
+        }
+        
         // Display user message in chat view
         displayMessage(userMessage, "user");
+        e.target.value = "";
 
         // Send the user message to the FastAPI server
         const response = await fetch("http://localhost:8000/send_message/", {
@@ -48,11 +53,10 @@ document.getElementById('chat-input').addEventListener("keypress", async functio
         const data = await response.json();
         const botMessage = data.response;
 
+
+
         // Display bot message in chat view
         displayMessage(botMessage, "bot");
-
-        // Clear the input field
-        e.target.value = "";
     }
 });
 
