@@ -14,12 +14,17 @@ controls.dampingFactor = 0.05;
 const textureLoader = new THREE.TextureLoader();
 
 // Load background texture
-const backgroundTexture = textureLoader.load('assets/milkyway.jpg'); 
-const backgroundGeometry = new THREE.PlaneGeometry(1000, 1000); 
-const backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture});
-const backgroundPlane = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-backgroundPlane.position.z = -100;
-scene.add(backgroundPlane);
+const backgroundTexture = textureLoader.load('assets/milkyway.jpg');
+
+// Create a large sphere for the background
+const backgroundGeometry = new THREE.SphereGeometry(500, 64, 64);
+const backgroundMaterial = new THREE.MeshBasicMaterial({ 
+    map: backgroundTexture, 
+    side: THREE.BackSide // Render the texture on the inside of the sphere
+});
+const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+scene.add(backgroundSphere);
+
 
 // Light (the Sun)
 const light = new THREE.PointLight(0xffffff, 1, 1000);
