@@ -73,6 +73,7 @@
                         const data = await response.json(); // Parse the JSON response
                         const answer = data.assistant_response; // Extract the answer from the response
                         currentThreadId = data.id; // Extract the thread ID from the response
+                        console.log(answer);
                         
                         addResponse(answer); // Add the response to the chat
                         currentThreadId = data.id; // Update the thread ID for future messages

@@ -12,7 +12,7 @@
             position: fixed;
             bottom: 80px;
             right: 20px;
-            width: 300px; /* Set fixed width */
+            width: 500px; /* Set fixed width */
             background-color: #1e1e1e; /* Dark background */
             border: 1px solid #333; /* Darker border */
             border-radius: 5px;
@@ -95,11 +95,12 @@
             color: white;
             padding: 10px 10px;
             border-radius: 10px; /* Rounded corners */
-            max-width: 200px; /* Limit message width */
+            max-width: 350px; /* Limit message width */
             text-align: left; /* Align text to the left inside the rectangle */
             margin: 5px 0;
             align-self: flex-end; /* Push message to the right */
             display: inline-block;
+            font-size: small;
         }
 
         /* Style for responses (left side, gray rectangle) */
@@ -108,11 +109,12 @@
             color: black;
             padding: 10px 10px;
             border-radius: 10px; /* Rounded corners */
-            max-width: 200px; /* Limit response width */
+            max-width: 350px; /* Limit response width */
             text-align: left; /* Align text to the left inside the rectangle */
             margin: 5px 0;
             align-self: flex-start; /* Push response to the left */
             display: inline-block;
+            font-size: small;
         }
 
         /* General chat body styling to allow for flex alignment */
@@ -127,7 +129,6 @@
         .chat-body-p{
             color: white;
         }
-
 
         body { 
             margin: 0;
@@ -167,61 +168,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/solarSystem.js"></script>
     <script src="js/planets.js"></script>
-
-    <script>
-        // Get elements
-        const chatPopup = document.getElementById("chat-popup");
-        const chatButton = document.getElementById("chat-button");
-        const closeChatButton = document.getElementById("close-chat");
-        const chatBody = document.getElementById("chat-body");
-        const chatInput = document.getElementById("chat-input");
-
-        // Open chat when the button is clicked
-        chatButton.addEventListener("click", () => {
-            chatPopup.style.display = "block";
-        });
-
-        // Close chat when the close button is clicked
-        closeChatButton.addEventListener("click", () => {
-            chatPopup.style.display = "none";
-        });
-
-       // Send chat message on pressing Enter
-    chatInput.addEventListener("keydown", (e) => {
-        if (e.key === 'Enter') {
-            const message = chatInput.value.trim();
-            if (message) {
-                addMessage(message); // Add message to the chat on the right side
-                addResponse('## HELLO there!\nThis is a *sample* response with **Markdown**.\n- Item 1\n- Item 2'); // Example response
-            }
-            e.preventDefault(); // Prevent default behavior of form submission
-        }
-    });
-
-    // Function to add user's message on the right side (blue circle)
-    function addMessage(message) {
-        const messageElement = document.createElement("div");
-        messageElement.classList.add("chat-message", "right-message"); // Apply right message style
-
-        // Use marked to parse markdown
-        messageElement.innerHTML = marked.parse(message); 
-
-        chatBody.appendChild(messageElement); // Add message to chat body
-        chatInput.value = ""; // Clear the input
-        chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
-    }
-
-    // Function to add response on the left side (gray circle)
-    function addResponse(response) {
-        const responseElement = document.createElement("div");
-        responseElement.classList.add("chat-response", "left-response"); // Apply left response style
-        console.log(typeof marked); // Should log "function"
-        // Use marked to parse markdown
-        responseElement.innerHTML = marked.parse(response); 
-
-        chatBody.appendChild(responseElement); // Add response to chat body
-        chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
-    }
-    </script>
+    <script src="js/chatPopUpMain.js"></script>
 </body>
 </html>

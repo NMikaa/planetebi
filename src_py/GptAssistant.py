@@ -90,7 +90,7 @@ class Chatbot:
             # Find the last assistant's response
             assistant_messages = [m for m in messages if m.role == 'assistant']
             if assistant_messages:
-                last_assistant_message = assistant_messages[-1]
+                last_assistant_message = assistant_messages[0]
                 return last_assistant_message.content
             else:
                 return "No assistant response found."

@@ -5,3 +5,4 @@ Flask
 pandas
 fastapi 
 uvicorn
+requests
