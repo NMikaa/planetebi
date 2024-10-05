@@ -194,20 +194,61 @@ window.addEventListener('resize', () => {
 
 
 
+// async function displayPlanetInfo(planetData) {
+//     const infoDiv = document.getElementById('planet-info');
+//     const heading = document.querySelector('.heading');
+    
+//     heading.textContent = `${planetData.englishName ? planetData.englishName : 'N/A'}`;
+    
+//     // Format mass with exponent
+//     let massText = 'N/A';
+//     if (planetData.mass && planetData.mass.massValue && planetData.mass.massExponent) {
+//         massText = `${planetData.mass.massValue} × 10<sup>${planetData.mass.massExponent}</sup> kg`;
+//     }
+
+//     infoDiv.innerHTML = `
+//         <strong>Mass:</strong> ${massText}<br>
+//         <strong>Diameter:</strong> ${planetData.meanRadius ? planetData.meanRadius * 2 : 'N/A'} km<br>
+//         <strong>Distance from Sun:</strong> ${planetData.semimajorAxis ? planetData.semimajorAxis : 'N/A'} km<br>
+//         <em>${planetData.isPlanet ? 'This is a planet.' : 'This is not a planet.'}</em>
+//     `;
+// }
+
 async function displayPlanetInfo(planetData) {
     const infoDiv = document.getElementById('planet-info');
     const heading = document.querySelector('.heading');
-    heading.textContent = `${planetData.englishName ? planetData.englishName : 'N/A' }`;
+    let planetname = planetData.englishName ? planetData.englishName : 'N/A';
+    
+    heading.textContent = planetname;
+    
+    // Convert mass to Earth mass equivalent
+    let massText = 'N/A';
+    const earthMass = 5.972 * Math.pow(10, 24); // Earth's mass in kg
+    if (planetname != 'Earth' && (planetData.mass && planetData.mass.massValue && planetData.mass.massExponent)) {
+        const planetMass = planetData.mass.massValue * Math.pow(10, planetData.mass.massExponent);
+        const massInEarthMass = planetMass / earthMass;
+        massText = `${massInEarthMass.toFixed(2)} Earth masses`;
+    } else if(planetname == 'Earth'){
+        if (planetData.mass && planetData.mass.massValue && planetData.mass.massExponent) {
+            massText = `${planetData.mass.massValue} × 10<sup>${planetData.mass.massExponent}</sup> kg`;
+        }
+    }
+
+    let distanceText = '0';
+    const kilometersToLightYears = 9.461e12; // Conversion factor (km to light years)
+    if (planetData.semimajorAxis) {
+        const distanceInLightYears = planetData.semimajorAxis / kilometersToLightYears;
+        distanceText = `${distanceInLightYears.toFixed(6)} light-years`;
+    }
+    
     infoDiv.innerHTML = `
-        Mass: ${planetData.mass ? planetData.mass : 'N/A'} kg<br>
-        Diameter: ${planetData.meanRadius ? planetData.meanRadius * 2 : 'N/A'} km<br>
-        Distance from Sun: ${planetData.semimajorAxis ? planetData.semimajorAxis : 'N/A'} km<br>
+        <strong>Mass:</strong> ${massText}<br>
+        <strong>Diameter:</strong> ${planetData.meanRadius ? planetData.meanRadius * 2 : 'N/A'} km<br>
+        <strong>Distance from Sun:</strong> ${distanceText}<br>
         <em>${planetData.isPlanet ? 'This is a planet.' : 'This is not a planet.'}</em>
     `;
 }
 
-
-let planetDataCache = []; // Global cache for planet data
 
 // Fetch planet data and store it in cache
 async function fetchPlanetData() {
@@ -246,8 +287,9 @@ async function onClick(event) {
                 selectedPlanet.position.x,
                 selectedPlanet.position.y,
                 selectedPlanet.position.z + 10
-            ); // Zoom in
+            ); 
             displayPlanetInfo(planetData);
+            console.log(planetData)
         } else {
             console.log(`Planet named "${planetName}" not found.`);
         }
