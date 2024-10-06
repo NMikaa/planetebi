@@ -15,6 +15,8 @@ controls.dampingFactor = 0.05;
 const SOLAR_RADIUS_SCALING = 200;  // Scale factor for stars
 const EARTH_RADIUS_SCALING = 2;  
 const ORBITAL_DISTANCE_SCALING = 1; 
+let focusedOnCanvas = false;
+
 const planetTextures = {
     hot: [],
     earth_like: [],
@@ -22,6 +24,8 @@ const planetTextures = {
 };
 const textureLoader = new THREE.TextureLoader();
 const backgroundTexture = textureLoader.load('assets/milkyway.jpg');
+
+camera.position.z = 60;
 
 
 // Create a large sphere for the background
@@ -106,6 +110,7 @@ function setupSystem(systemData) {
 
 }
 
+camera.position.z = 100;
 const MINIMUM_ORBITAL_DISTANCE = 20;
 
 function createPlanet(planetData, distance, planetName) {
@@ -225,9 +230,119 @@ async function displayPlanetInfo(planetData) {
         <strong>Planet Radius:</strong> ${planetData.planet_radius} Earth radii<br>
         <strong>Planet Mass:</strong> ${planetData.planet_mass} Earth masses<br>
         <strong>Star Temperature:</strong> ${planetData.star_temperature} K<br>
-        <strong>Star Radius:</strong> ${planetData.star_radius} Solar radii<br><br>`;
+        <strong>Star Radius:</strong> ${planetData.star_radius} Solar radii<br><br>
+        
+
+        <div style="position: fixed; top: 20px; right: 20px; width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: rgba(0, 0, 0, 0.5); z-index: 999999;">
+            <label for="planet-radius">Enter Planet Radius (km):</label>
+            <input type="text" id="planet-radius" placeholder="Radius (km)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+
+            <label for="planet-color">Enter Planet Color:</label>
+            <input type="text" id="planet-color" placeholder="Color (e.g., blue)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+
+            <label for="planet-temperature">Enter Planet Temperature (K):</label>
+            <input type="text" id="planet-temperature" placeholder="Temperature (K)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+
+            <label>Type:</label>
+            <span style="display: inline-block; margin-left: 10px;">
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="cloudy" value="Cloudy" style="width: 20px; height: 20px;"> Cloudy
+                </label>
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="gas" value="Gas" style="width: 20px; height: 20px;"> Gas
+                </label>
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="rocky" value="Rocky" style="width: 20px; height: 20px;"> Rocky
+                </label>
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="ice" value="Ice" style="width: 20px; height: 20px;"> Ice
+                </label>
+            </span>
+            
+            <br><br>
+
+            <button id="save-button" style="background-color: blue; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Save</button>
+        </div>
+        `;
         
     infoDiv.innerHTML = content;
+// Add event listener for the "Save" button
+    const saveButton = document.getElementById('save-button');
+    saveButton.onclick = async () => {
+        event.preventDefault();
+        const sizeInput = document.getElementById('planet-radius').value;
+        const newSize = parseFloat(sizeInput); // Parse the input as a float
+
+        const color = document.getElementById('planet-color').value;
+        const temperature = document.getElementById('planet-temperature').value;
+
+        const types = [];
+        if (document.getElementById('cloudy').checked) types.push('Cloudy');
+        if (document.getElementById('gas').checked) types.push('Gas');
+        if (document.getElementById('rocky').checked) types.push('Rocky');
+        if (document.getElementById('ice').checked) types.push('Ice');
+
+        const data = {
+            color: color,
+            temperature: temperature,
+            types: types,
+        };
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/generate_image/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({temperature: temperature, color: color, types: types}),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const imageUrl = result.img_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
+                console.log(imageUrl); // Add this to see the exact image URL returned
+                // Now load the texture to the selected planet
+                const textureLoader = new THREE.TextureLoader();
+                textureLoader.load(imageUrl, (texture) => {
+                    selectedPlanet.material.map = texture;
+                    selectedPlanet.material.needsUpdate = true;  // To ensure Three.js updates the material with the new texture
+                });
+                console.log("gamevitane");
+            } else {
+                console.error("Error:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+
+        if (selectedPlanet) {
+            selectedPlanet.customSize = newSize; // Store size
+            // selectedPlanet.customColor = color; // Store color
+            // selectedPlanet.customTemperature = temperature; // Store temperature
+
+            console.log(`Saved data for ${selectedPlanet.name}: Size: ${newSize}, Color: ${color}, Temperature: ${temperature}, Type: ${types}`);
+        }
+
+        if (!isNaN(newSize) && newSize > 0) {
+            // Update the planet's scale
+            selectedPlanet.scale.set(newSize, newSize, newSize);
+            // Optionally, you can also update the planet's geometry to keep the proportions accurate
+            const newGeometry = new THREE.SphereGeometry(newSize, 32, 32);
+            const planetMaterial = selectedPlanet.material; // Keep the same material
+            const newPlanetMesh = new THREE.Mesh(newGeometry, planetMaterial);
+            newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
+            newPlanetMesh.name = selectedPlanet.name; // Preserve the name
+            newPlanetMesh = structuredClone(selectedPlanet);
+            scene.remove(selectedPlanet); // Remove the old planet mesh
+            scene.add(newPlanetMesh); // Add the new planet mesh
+            const idx = planets.indexOf(selectedPlanet)
+            planets.splice(idx,1);
+            planets.splice(idx,0,newPlanetMesh);
+            // console.log(planets.length)
+            selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
+        }
+    };
+    
 }
 
 window.addEventListener('resize', () => {
@@ -286,6 +401,7 @@ async function fetchSystemData() {
 
 fetchSystemData();
 
+
 // Input event listener for searching a planetary system by host star name
 const input = document.getElementById('hostNameInput');
 input.addEventListener('keypress', (event) => {
@@ -334,18 +450,18 @@ function toggleAnimation(play) {
 }
 
         
-window.addEventListener('keyup',(event)=>{
-    if(event.code == "Space"){
-        isPlaying = !isPlaying; // Toggle play state
-        if (isPlaying) {
-            playButton.textContent = "❚❚"; // Change button to pause icon
-            toggleAnimation(true); // Call your function to start or continue the animation
-        } else {
-            playButton.textContent = "▶"; // Change button to play icon
-            toggleAnimation(false); // Call your function to pause the animation
-        }
-    }
-})
+// window.addEventListener('keyup',(event)=>{
+//     if(event.code == "Space"){
+//         isPlaying = !isPlaying; // Toggle play state
+//         if (isPlaying) {
+//             playButton.textContent = "❚❚"; // Change button to pause icon
+//             toggleAnimation(true); // Call your function to start or continue the animation
+//         } else {
+//             playButton.textContent = "▶"; // Change button to play icon
+//             toggleAnimation(false); // Call your function to pause the animation
+//         }
+//     }
+// })
 
 function focusOnSelectedPlanet() {
     if (selectedPlanet) {
@@ -376,10 +492,21 @@ playButton.addEventListener("click", () => {
 });
 
 async function onClick(event) {
+    if(event.target == renderer.domElement){
+        focusedOnCanvas = true;
+    }else {
+        focusedOnCanvas = false;
+    }
     raycaster.setFromCamera(mouse, camera);
-    const objectsToCheck = [...planets.map(p => p.mesh)];
+    const objectsToCheck = [...planets.map(p => p.mesh), currentStar];
     const intersects = raycaster.intersectObjects(objectsToCheck);
-    
+    // Check if the click was on an input field or the save button
+    const targetElement = event.target;
+
+    if (targetElement.id === "save-button" || targetElement.matches("input")) {
+        // If the click was on the save button or any input field, do not reset the camera
+        return;
+    }
     if (intersects.length > 0) {
         isPlaying = true;
         playButton.textContent = "❚❚"; // Change button to pause icon
@@ -401,8 +528,6 @@ async function onClick(event) {
         } else {
             console.log(`Planet named "${planetName}" not found.`);
         }
-    } else {
-        resetCamera();
     }
 }
 
@@ -443,3 +568,31 @@ function resetCamera() {
     controls.target.set(0, 0, 0); // Reset target to center of the system
     controls.update(); // Ensure the controls recognize the change
 }
+
+window.addEventListener('keyup',(event)=>{
+    if(event.code == "Space" && focusedOnCanvas){
+        isPlaying = !isPlaying; // Toggle play state
+        if (isPlaying) {
+            playButton.textContent = "❚❚"; // Change button to pause icon
+            toggleAnimation(true); // Call your function to start or continue the animation
+        } else {
+            playButton.textContent = "▶"; // Change button to play icon
+            toggleAnimation(false); // Call your function to pause the animation
+        }
+    }
+    if(event.code == 'Escape'){
+        resetCamera();
+    }
+})
+
+// function createSolarSystem(){
+//     createSolarPlanet(1.422, 10, 'assets/mercury.jpg', 'Mercury', 0.01); 
+//     createSolarPlanet(1.664, 15, 'assets/venus.jpg', 'Venus', 0.005);  
+//     createSolarPlanet(1.7, 20, 'assets/earth.jpg', 'Earth', 0.0025);  
+//     createSolarPlanet(1.494, 25, 'assets/mars.jpg', 'Mars', 0.002);  
+//     createSolarPlanet(5.1, 45, 'assets/jupiter.jpg', 'Jupiter', 0.0005); 
+//     createSolarPlanet(4.38, 65, 'assets/saturn.jpg', 'Saturn', 0.0002);  
+//     createSolarPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.0015);  
+//     createSolarPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.001);  
+// }
+

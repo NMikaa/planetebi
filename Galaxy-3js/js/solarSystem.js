@@ -353,13 +353,9 @@ async function displayPlanetInfo(planetData) {
             const newPlanetMesh = new THREE.Mesh(newGeometry, planetMaterial);
             newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
             newPlanetMesh.name = selectedPlanet.name; // Preserve the name
-            newPlanetMesh = structuredClone(selectedPlanet);
+
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
-            const idx = planets.indexOf(selectedPlanet)
-            planets.splice(idx,1);
-            planets.splice(idx,0,newPlanetMesh);
-            // console.log(planets.length)
             selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
         }
     };
