@@ -642,7 +642,35 @@ function displayStarInfo(starName){
     
     infoDiv.innerHTML = content;
     const saveButton = document.getElementById('save-button');
-    let loadingAnimation; // Variable to hold the animation interval
+    const loadingIndicator = document.getElementById('loading-indicator'); // Get the loading element
+    let loadingAnimation;
+    function stopLoadingAnimation() {
+        clearInterval(loadingAnimation);
+        let canv =  document.querySelector("canvas");
+        canv.style.opacity =  "1";
+        loadingIndicator.style.display = 'none'; // Hide the loading indicator
+    }
+
+    function startLoadingAnimation() {
+        let canv =  document.querySelector("canvas");
+        canv.style.opacity =  "0.7";
+        const loadingText = "Loading...";
+        let currentIndex = 0;
+
+        // Show the loading indicator
+        loadingIndicator.style.display = 'block';
+
+        // Set up an interval to update the text
+        loadingAnimation = setInterval(() => {
+            currentIndex = (currentIndex + 1) % (loadingText.length + 1); // Loop around after reaching full text
+
+            if (currentIndex <= loadingText.length) {
+                loadingIndicator.textContent = loadingText.substring(0, currentIndex); // Show progressively longer text
+            } else {
+                loadingIndicator.textContent = loadingText.substring(0, currentIndex - (loadingText.length + 1)); // Restart from "L"
+            }
+        }, 300); // Change the text every 300ms (adjust for faster or slower animation)
+    }
 
     
     saveButton.onclick = async (event) => {
