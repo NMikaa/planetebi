@@ -20,6 +20,24 @@ h1 {
   margin-top: 100px;
 }
 
+.back-button {
+  position: absolute; /* Position the button absolutely */
+  top: 10px; /* Distance from the top */
+  right: 10px; /* Distance from the right */
+  padding: 10px 15px; /* Adjust padding for a better look */
+  background-color: #ef6a36; /* Primary color for the button */
+  color: white; /* Text color */
+  border: none; /* Remove border */
+  border-radius: 15px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor on hover */
+  z-index: 1000; /* Ensure the button is above other elements */
+}
+
+.back-button:hover {
+  background-color: #f8925f; /* Darker shade on hover */
+}
+
+
 
 
 body {
