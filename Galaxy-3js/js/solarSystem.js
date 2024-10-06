@@ -396,12 +396,10 @@ async function displayPlanetInfo(planetData) {
 
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
-<<<<<<< HEAD
-=======
+
             const idx = planets.indexOf(selectedPlanet);
             planets.splice(idx, 1);
             planets.splice(idx, 0, newPlanetMesh);
->>>>>>> 79b567d469d39cfe91b1dc521732f0ad81803908
             selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
         }
     };    
