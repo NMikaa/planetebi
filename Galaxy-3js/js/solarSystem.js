@@ -290,6 +290,7 @@ async function displayPlanetInfo(planetData) {
     // Add event listener for the "Save" button
     const saveButton = document.getElementById('save-button');
     saveButton.onclick = async () => {
+        event.preventDefault();
         const sizeInput = document.getElementById('planet-radius').value;
         const newSize = parseFloat(sizeInput); // Parse the input as a float
 
@@ -319,9 +320,8 @@ async function displayPlanetInfo(planetData) {
     
             if (response.ok) {
                 const result = await response.json();
-                const imageUrl = result.image_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
+                const imageUrl = result.img_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
                 console.log(imageUrl); // Add this to see the exact image URL returned
-                localStorage(imageUrl);
                 // Now load the texture to the selected planet
                 const textureLoader = new THREE.TextureLoader();
                 textureLoader.load(imageUrl, (texture) => {
