@@ -383,9 +383,15 @@ function getPlanetDataByName(planetName) {
 
 // Call this once during scene initialization
 fetchPlanetData();
+let focusedOnCanvas = false;
 
 // Modify the onClick function to use the cached data
 async function onClick(event) {
+    if(event.target == renderer.domElement){
+        focusedOnCanvas = true;
+    }else {
+        focusedOnCanvas = false;
+    }
     raycaster.setFromCamera(mouse, camera);
     const objectsToCheck = [...planets.map(p => p.mesh), sun];
     const intersects = raycaster.intersectObjects(objectsToCheck);
@@ -418,7 +424,7 @@ async function onClick(event) {
             console.log(`Planet named "${planetName}" not found.`);
         }
     } else {
-        resetCamera(); // Reset the camera only if clicking outside planets
+        
     }
 }
 
@@ -473,7 +479,7 @@ function toggleAnimation(play) {
 
 
 window.addEventListener('keyup',(event)=>{
-    if(event.code == "Space"){
+    if(event.code == "Space" && focusedOnCanvas){
         isPlaying = !isPlaying; // Toggle play state
         if (isPlaying) {
             playButton.textContent = "❚❚"; // Change button to pause icon
@@ -482,5 +488,8 @@ window.addEventListener('keyup',(event)=>{
             playButton.textContent = "▶"; // Change button to play icon
             toggleAnimation(false); // Call your function to pause the animation
         }
+    }
+    if(event.code == 'Escape'){
+        resetCamera();
     }
 })
