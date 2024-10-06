@@ -358,24 +358,21 @@ async function displayPlanetInfo(planetData) {
         if (!isNaN(newSize) && newSize > 0) {
             // Update the planet's scale
             selectedPlanet.scale.set(newSize, newSize, newSize);
-        
-            // Create new geometry and mesh for the planet with the new size
+            
+    
             const newGeometry = new THREE.SphereGeometry(newSize, 32, 32);
             const planetMaterial = selectedPlanet.material; // Keep the same material
             const newPlanetMesh = new THREE.Mesh(newGeometry, planetMaterial);
             newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
             newPlanetMesh.name = selectedPlanet.name; // Preserve the name
-        
-            // Remove the old planet mesh and add the new planet mesh
+
+            newPlanetMesh = structuredClone(selectedPlanet);
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
-        
-            // Update the planets array
+
             const idx = planets.indexOf(selectedPlanet);
-            if (idx !== -1) {
-                planets.splice(idx, 1, newPlanetMesh); // Replace the old planet with the new one
-            }
-        
+            planets.splice(idx, 1);
+            planets.splice(idx, 0, newPlanetMesh);
             selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
         }
     };
