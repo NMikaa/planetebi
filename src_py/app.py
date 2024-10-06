@@ -5,7 +5,6 @@ import pandas as pd
 import requests
 from io import BytesIO
 from starlette.responses import StreamingResponse
-import motor.motor_asyncio  # For MongoDB
 import openai
 import os
 from dotenv import load_dotenv, find_dotenv
@@ -44,11 +43,7 @@ app.add_middleware(
 # Create a global instance of PlanetAssistant that can be switched
 current_assistant = PlanetAssistant()
 
-# MongoDB setup
-MONGODB_URL = "mongodb://localhost:27017"  # Replace with your MongoDB connection string
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URL)
-db = client.chat_db  # Database name
-conversations_collection = db.conversations  # Collection name
+
 
 # Define the request models
 class UserInputModel(BaseModel):
@@ -63,13 +58,6 @@ class MessagePayload(BaseModel):
     message: str
     id: str = None
 # Helper function to save conversation
-async def save_conversation(user_input, bot_response):
-    conversation_data = {
-        "user_input": user_input,
-        "bot_response": bot_response
-    }
-    result = await conversations_collection.insert_one(conversation_data)
-    return str(result.inserted_id)  # Return the ID of the inserted conversation
 
 @app.post("/switch_convo/")
 def switch_convo():
@@ -89,7 +77,6 @@ async def start_of_conversation(user_input: UserInputModel):
     try:
         # Start the conversation with the provided user input
         current_assistant.start_conversation(user_input.user_input, df)
-
         # Finalize and get the image URL
         image_url = current_assistant.finalize_conversation()
         if image_url:
@@ -99,7 +86,6 @@ async def start_of_conversation(user_input: UserInputModel):
                 # Read the image content
                 img = BytesIO(response.content)
                 # Save the conversation to MongoDB
-                await save_conversation(user_input.user_input, image_url)
                 # Return the image as a streaming response
                 return StreamingResponse(img, media_type="image/png")
             else:
@@ -128,7 +114,6 @@ async def continue_conversation(user_input: UserInputModel):
                 # Read the image content
                 img = BytesIO(response.content)
                 # Save the conversation to MongoDB
-                await save_conversation(user_input.user_input, image_url)
                 # Return the image as a streaming response
                 return StreamingResponse(img, media_type="image/png")
             else:
@@ -145,8 +130,7 @@ async def generate_image(features: FeaturesModel):
     Generate an image based on the provided features using the predefined prompt.
     """
     second_assistant = PlanetAssistant()
-    print(features)
-    print(type(features))
+
     try:
         # Extract values from the features
         temperature = features.temperature or 'temperate'
@@ -169,7 +153,7 @@ async def generate_image(features: FeaturesModel):
         # Generate the image URL
         print(prompt)
         image_url = second_assistant.generate_dalle_image(prompt=prompt)
-        print(image_url, "this is main image url")
+        print(image_url)
 
         # Preprocess the image
         image = second_assistant.preprocess_dalle_image(image_url)  # Use the standalone function
