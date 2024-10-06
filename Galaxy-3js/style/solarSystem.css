@@ -24,14 +24,14 @@ body { margin: 0;
     left: 5%;
     color: aliceblue;
 }
-#planet-info { 
+/* #planet-info { 
     position: absolute;
     top: 80px;
     left: 20px;
     background: rgba(0, 0, 0, 0.7);
     color: white;
     padding: 10px;
-}
+} */
 .heading {
     font-size: 20px;
     font-weight: bold;

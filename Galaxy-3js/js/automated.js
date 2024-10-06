@@ -12,8 +12,8 @@ let isPlaying = true;
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-const SOLAR_RADIUS_SCALING = 200;  // Scale factor for stars
-const EARTH_RADIUS_SCALING = 2;  
+const SOLAR_RADIUS_SCALING = 150;  // Scale factor for stars
+const EARTH_RADIUS_SCALING = 5;  
 const ORBITAL_DISTANCE_SCALING = 1; 
 let focusedOnCanvas = false;
 
@@ -96,6 +96,9 @@ function setupSystem(systemData) {
     currentStar.name = systemData[0].star_name;
     scene.add(currentStar);
 
+    const cameraDistance = starRadius * 6; // Set camera 6 times the star's radius away
+    camera.position.set(0, 0, cameraDistance);
+    camera.lookAt(currentStar.position); 
     // Adjust the distance of the first planet based on the star's radius
     const baseDistance = starRadius * 2; // Set the first planet's distance relative to star radius
 
@@ -561,13 +564,20 @@ function resetCamera() {
     infoDiv.textContent = "Click on a planet to see its information";
     title.textContent = 'Solar System';
     selectedPlanet = null;
-    targetCameraPosition.set(0, 20, 50); // Your default camera position
+
+    // Dynamically calculate a safe camera distance based on the star's radius
+    const starRadius = currentStar.geometry.parameters.radius;
+    const cameraDistance = starRadius * 6; // Place camera 6 times the star's radius away
+    
+    // Set the camera position
+    targetCameraPosition.set(0, starRadius * 2, cameraDistance); // Adjust Y based on star size too
     camera.position.copy(targetCameraPosition); // Reset the camera position
 
-    // Reset the OrbitControls target (important)
-    controls.target.set(0, 0, 0); // Reset target to center of the system
+    // Reset the OrbitControls target to the center of the system
+    controls.target.set(0, 0, 0); // Reset target to the star or system center
     controls.update(); // Ensure the controls recognize the change
 }
+
 
 window.addEventListener('keyup',(event)=>{
     if(event.code == "Space" && focusedOnCanvas){
@@ -585,14 +595,4 @@ window.addEventListener('keyup',(event)=>{
     }
 })
 
-// function createSolarSystem(){
-//     createSolarPlanet(1.422, 10, 'assets/mercury.jpg', 'Mercury', 0.01); 
-//     createSolarPlanet(1.664, 15, 'assets/venus.jpg', 'Venus', 0.005);  
-//     createSolarPlanet(1.7, 20, 'assets/earth.jpg', 'Earth', 0.0025);  
-//     createSolarPlanet(1.494, 25, 'assets/mars.jpg', 'Mars', 0.002);  
-//     createSolarPlanet(5.1, 45, 'assets/jupiter.jpg', 'Jupiter', 0.0005); 
-//     createSolarPlanet(4.38, 65, 'assets/saturn.jpg', 'Saturn', 0.0002);  
-//     createSolarPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.0015);  
-//     createSolarPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.001);  
-// }
 
