@@ -289,6 +289,12 @@ async function displayPlanetInfo(planetData) {
         </div>
         `;
         
+            function stopLoadingAnimation() {
+                clearInterval(loadingAnimation);
+                let canv =  document.querySelector("canvas");
+                canv.style.opacity =  "1";
+                loadingIndicator.style.display = 'none'; // Hide the loading indicator
+            }
     infoDiv.innerHTML = content;
 // Add event listener for the "Save" button
     const saveButton = document.getElementById('save-button');
