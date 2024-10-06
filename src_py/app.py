@@ -142,11 +142,12 @@ async def generate_image(features: FeaturesModel):
     Generate an image based on the provided features using the predefined prompt.
     """
     second_assistant = PlanetAssistant()
-
+    print(features)
+    print(type(features))
     try:
         # Extract values from the features
         temperature = features.temperature or 'temperate'
-        planet_type = features.type or 'terrestrial'
+        planet_type = ", ".join(features.types or 'terrestrial')
         color = features.color or 'earthy'
 
         # Predefined prompt with placeholders
@@ -156,13 +157,14 @@ async def generate_image(features: FeaturesModel):
             "surface and atmospheric features, conveying a sense of depth and motion. "
             "The planet is centrally positioned in the composition. don't generate any shadows in this picture."
         )
-
+        print("mihvelet")
         # Replace placeholders with actual values
         prompt = prompt_template.replace('[temperature]', temperature)
         prompt = prompt.replace('[type]', planet_type)
         prompt = prompt.replace('[color]', color)
 
         # Generate the image URL
+        print(prompt)
         image_url = second_assistant.generate_dalle_image(prompt=prompt)
         print(image_url, "this is main image url")
 
@@ -175,7 +177,7 @@ async def generate_image(features: FeaturesModel):
             image.save(img_bytes, format='PNG')
             img_byte_array = img_bytes.getvalue()  # Get the bytes data
             final_url = uploader.upload(file=img_byte_array, unique_filename=True, overwrite=True)['secure_url']
-
+            print(final_url)
             return {"img_url": final_url}
         else:
             raise HTTPException(status_code=500, detail="Image generation failed")

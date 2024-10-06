@@ -309,18 +309,19 @@ async function displayPlanetInfo(planetData) {
         };
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/message/", {
+            const response = await fetch("http://127.0.0.1:8000/generate_image/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify({temperature: temperature, color: color, types: types}),
             });
     
             if (response.ok) {
                 const result = await response.json();
-                const imageUrl = result.imageUrl; // Assuming the server returns { "imageUrl": "link-to-image.png" }
-    
+                const imageUrl = result.image_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
+                console.log(imageUrl); // Add this to see the exact image URL returned
+                localStorage(imageUrl);
                 // Now load the texture to the selected planet
                 const textureLoader = new THREE.TextureLoader();
                 textureLoader.load(imageUrl, (texture) => {
