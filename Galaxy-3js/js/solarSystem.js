@@ -257,7 +257,7 @@ async function displayPlanetInfo(planetData) {
        
         <div style="position: fixed; top: 20px; right: 20px; width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: rgba(0, 0, 0, 0.5); z-index: 999999;">
             <label for="planet-radius">Enter Planet Radius (km):</label>
-            <input type="range" id="size-range" min="1" max="15"  style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+            <input type="range" id="size-range" min="0.1" max="5"  style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
 
             <label for="planet-color">Enter Planet Color:</label>
             <input type="text" id="planet-color" placeholder="Color (e.g., blue)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
@@ -388,24 +388,19 @@ async function displayPlanetInfo(planetData) {
         if (!isNaN(newSize) && newSize > 0) {
             // Update the planet's scale
             selectedPlanet.scale.set(newSize, newSize, newSize);
-        
-            // Create new geometry and mesh for the planet with the new size
+    
             const newGeometry = new THREE.SphereGeometry(newSize, 32, 32);
             const planetMaterial = selectedPlanet.material; // Keep the same material
             const newPlanetMesh = new THREE.Mesh(newGeometry, planetMaterial);
             newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
             newPlanetMesh.name = selectedPlanet.name; // Preserve the name
-        
-            // Remove the old planet mesh and add the new planet mesh
+
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
-        
-            // Update the planets array
+
             const idx = planets.indexOf(selectedPlanet);
-            if (idx !== -1) {
-                planets.splice(idx, 1, newPlanetMesh); // Replace the old planet with the new one
-            }
-        
+            planets.splice(idx, 1);
+            planets.splice(idx, 0, newPlanetMesh);
             selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
         }
     };    
