@@ -388,6 +388,7 @@ async function displayPlanetInfo(planetData) {
         if (!isNaN(newSize) && newSize > 0) {
             // Update the planet's scale
             selectedPlanet.scale.set(newSize, newSize, newSize);
+            
     
             const newGeometry = new THREE.SphereGeometry(newSize, 32, 32);
             const planetMaterial = selectedPlanet.material; // Keep the same material
@@ -395,6 +396,7 @@ async function displayPlanetInfo(planetData) {
             newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
             newPlanetMesh.name = selectedPlanet.name; // Preserve the name
 
+            newPlanetMesh = structuredClone(selectedPlanet);
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
 
