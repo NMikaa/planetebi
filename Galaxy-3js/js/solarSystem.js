@@ -84,8 +84,8 @@ createPlanet(1.7, 20, 'assets/earth.jpg', 'Earth', 0.0025);
 createPlanet(1.494, 25, 'assets/mars.jpg', 'Mars', 0.002);  
 createPlanet(5.1, 45, 'assets/jupiter.jpg', 'Jupiter', 0.0005); 
 createPlanet(4.38, 65, 'assets/saturn.jpg', 'Saturn', 0.0002);  
-createPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.0015);  
-createPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.001);  
+createPlanet(2.16, 80, 'assets/uranus.jpg', 'Uranus', 0.00022);  
+createPlanet(2.1, 95, 'assets/neptune.jpg', 'Neptune', 0.0003);  
 
 let isAnimating = true;
 // Orbiting animation
