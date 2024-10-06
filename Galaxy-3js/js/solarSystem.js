@@ -395,6 +395,7 @@ async function displayPlanetInfo(planetData) {
             newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
             newPlanetMesh.name = selectedPlanet.name; // Preserve the name
 
+            newPlanetMesh = structuredClone(selectedPlanet);
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
 
