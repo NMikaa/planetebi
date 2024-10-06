@@ -11,6 +11,16 @@ from bson import ObjectId  # For working with MongoDB object IDs
 import openai
 import os
 from dotenv import load_dotenv, find_dotenv
+import cloudinary.uploader as uploader
+import cloudinary
+
+
+cloudinary.config(
+  cloud_name = "dqfgluj1j",
+  api_key = "171765552355944",
+  api_secret = "jvvqDYqUNO0rJsvU-ruwunonuBs",
+  secure = True
+)
 
 # Load environment variables (e.g., OpenAI API key)
 load_dotenv(find_dotenv())
@@ -163,10 +173,10 @@ async def generate_image(features: FeaturesModel):
             # Convert the image to bytes
             img_bytes = BytesIO()
             image.save(img_bytes, format='PNG')
-            img_bytes.seek(0)
+            img_byte_array = img_bytes.getvalue()  # Get the bytes data
+            final_url = uploader.upload(file=img_byte_array, unique_filename=True, overwrite=True)['secure_url']
 
-            # Return the image as a StreamingResponse
-            return StreamingResponse(img_bytes, media_type="image/png")
+            return final_url
         else:
             raise HTTPException(status_code=500, detail="Image generation failed")
     except Exception as e:
