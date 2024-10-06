@@ -34,7 +34,7 @@ light.position.set(0, 0, 0);
 scene.add(light);
 
 // Load Sun texture
-const sunTexture = textureLoader.load('assets/test.png'); 
+const sunTexture = textureLoader.load('assets/sun.jpg'); 
 
 // Sun (center) with texture
 const sunGeometry = new THREE.SphereGeometry(6, 32, 32);
@@ -255,7 +255,7 @@ async function displayPlanetInfo(planetData) {
         <strong>Distance from Sun:</strong> ${distanceText}<br>
         <em>${planetData.isPlanet ? 'This is a planet.' : 'This is not a planet.'}</em><br><br>
        
-        <div style="position: fixed; top: 20px; right: 20px; width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: rgba(0, 0, 0, 0.5);">
+        <div style="position: fixed; top: 20px; right: 20px; width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: rgba(0, 0, 0, 0.5); z-index: 999999;">
             <label for="planet-radius">Enter Planet Radius (km):</label>
             <input type="text" id="planet-radius" placeholder="Radius (km)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
 
@@ -268,16 +268,16 @@ async function displayPlanetInfo(planetData) {
             <label>Type:</label>
             <span style="display: inline-block; margin-left: 10px;">
                 <label style="margin-right: 10px;">
-                    <input type="checkbox" id="cloudy" value="Cloudy"> Cloudy
+                    <input type="checkbox" id="cloudy" value="Cloudy" style="width: 20px; height: 20px;"> Cloudy
                 </label>
                 <label style="margin-right: 10px;">
-                    <input type="checkbox" id="gas" value="Gas"> Gas
+                    <input type="checkbox" id="gas" value="Gas" style="width: 20px; height: 20px;"> Gas
                 </label>
                 <label style="margin-right: 10px;">
-                    <input type="checkbox" id="rocky" value="Rocky"> Rocky
+                    <input type="checkbox" id="rocky" value="Rocky" style="width: 20px; height: 20px;"> Rocky
                 </label>
                 <label style="margin-right: 10px;">
-                    <input type="checkbox" id="ice" value="Ice"> Ice
+                    <input type="checkbox" id="ice" value="Ice" style="width: 20px; height: 20px;"> Ice
                 </label>
             </span>
             
@@ -328,6 +328,7 @@ async function displayPlanetInfo(planetData) {
                     selectedPlanet.material.map = texture;
                     selectedPlanet.material.needsUpdate = true;  // To ensure Three.js updates the material with the new texture
                 });
+                console.log("gamevitane");
             } else {
                 console.error("Error:", response.statusText);
             }
@@ -356,8 +357,6 @@ async function displayPlanetInfo(planetData) {
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
             selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
-        } else {
-            alert("Please enter a valid size greater than zero."); // Alert for invalid input
         }
     };
 }
