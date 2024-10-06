@@ -13,7 +13,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 import cloudinary.uploader as uploader
 import cloudinary
-
+from typing import List
 
 cloudinary.config(
   cloud_name = "dqfgluj1j",
@@ -56,7 +56,7 @@ class UserInputModel(BaseModel):
 
 class FeaturesModel(BaseModel):
     temperature: str
-    type: str
+    types:  List[str]
     color: str
 
 # Helper function to save conversation
@@ -176,7 +176,7 @@ async def generate_image(features: FeaturesModel):
             img_byte_array = img_bytes.getvalue()  # Get the bytes data
             final_url = uploader.upload(file=img_byte_array, unique_filename=True, overwrite=True)['secure_url']
 
-            return final_url
+            return {"img_url": final_url}
         else:
             raise HTTPException(status_code=500, detail="Image generation failed")
     except Exception as e:
