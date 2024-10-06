@@ -34,7 +34,7 @@ light.position.set(0, 0, 0);
 scene.add(light);
 
 // Load Sun texture
-const sunTexture = textureLoader.load('assets/sun.jpg'); 
+const sunTexture = textureLoader.load('assets/test.png'); 
 
 // Sun (center) with texture
 const sunGeometry = new THREE.SphereGeometry(6, 32, 32);
@@ -275,7 +275,6 @@ fetchPlanetData();
 
 // Modify the onClick function to use the cached data
 async function onClick(event) {
-    
     raycaster.setFromCamera(mouse, camera);
     const objectsToCheck = [...planets.map(p => p.mesh), sun];
     const intersects = raycaster.intersectObjects(objectsToCheck);
