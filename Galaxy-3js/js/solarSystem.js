@@ -289,65 +289,105 @@ async function displayPlanetInfo(planetData) {
 
     // Add event listener for the "Save" button
     const saveButton = document.getElementById('save-button');
-    saveButton.onclick = async () => {
+    const loadingIndicator = document.getElementById('loading-indicator'); // Get the loading element
+    let loadingAnimation; // Variable to hold the animation interval
+
+    // Function to start the "Loading..." animation
+    function startLoadingAnimation() {
+        let canv =  document.querySelector("canvas");
+        canv.style.opacity =  "0.7";
+        const loadingText = "Loading...";
+        let currentIndex = 0;
+
+        // Show the loading indicator
+        loadingIndicator.style.display = 'block';
+
+        // Set up an interval to update the text
+        loadingAnimation = setInterval(() => {
+            currentIndex = (currentIndex + 1) % (loadingText.length + 1); // Loop around after reaching full text
+
+            if (currentIndex <= loadingText.length) {
+                loadingIndicator.textContent = loadingText.substring(0, currentIndex); // Show progressively longer text
+            } else {
+                loadingIndicator.textContent = loadingText.substring(0, currentIndex - (loadingText.length + 1)); // Restart from "L"
+            }
+        }, 300); // Change the text every 300ms (adjust for faster or slower animation)
+    }
+
+    // Function to stop the "Loading..." animation
+    function stopLoadingAnimation() {
+        clearInterval(loadingAnimation);
+        let canv =  document.querySelector("canvas");
+        canv.style.opacity =  "1";
+        loadingIndicator.style.display = 'none'; // Hide the loading indicator
+    }
+    
+    saveButton.onclick = async (event) => {
         event.preventDefault();
         const sizeInput = document.getElementById('planet-radius').value;
         const newSize = parseFloat(sizeInput); // Parse the input as a float
-
+    
         const color = document.getElementById('planet-color').value;
         const temperature = document.getElementById('planet-temperature').value;
-
+    
         const types = [];
         if (document.getElementById('cloudy').checked) types.push('Cloudy');
         if (document.getElementById('gas').checked) types.push('Gas');
         if (document.getElementById('rocky').checked) types.push('Rocky');
         if (document.getElementById('ice').checked) types.push('Ice');
-
+    
         const data = {
             color: color,
             temperature: temperature,
             types: types,
         };
-
-        try {
-            const response = await fetch("http://127.0.0.1:8000/generate_image/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({temperature: temperature, color: color, types: types}),
-            });
+        if(types.length > 0 || color !== "" || temperature !== ""){
+            try {
+                // Show the loading indicator
+                // loadingIndicator.style.display = 'block';
+                startLoadingAnimation();
     
-            if (response.ok) {
-                const result = await response.json();
-                const imageUrl = result.img_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
-                console.log(imageUrl); // Add this to see the exact image URL returned
-                // Now load the texture to the selected planet
-                const textureLoader = new THREE.TextureLoader();
-                textureLoader.load(imageUrl, (texture) => {
-                    selectedPlanet.material.map = texture;
-                    selectedPlanet.material.needsUpdate = true;  // To ensure Three.js updates the material with the new texture
+                const response = await fetch("http://127.0.0.1:8000/generate_image/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({temperature: temperature, color: color, types: types}),
                 });
-                console.log("gamevitane");
-            } else {
-                console.error("Error:", response.statusText);
+    
+                if (response.ok) {
+                    const result = await response.json();
+                    const imageUrl = result.img_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
+                    console.log(imageUrl); // Add this to see the exact image URL returned
+    
+                    // Now load the texture to the selected planet
+                    const textureLoader = new THREE.TextureLoader();
+                    textureLoader.load(imageUrl, (texture) => {
+                        selectedPlanet.material.map = texture;
+                        selectedPlanet.material.needsUpdate = true;  // To ensure Three.js updates the material with the new texture
+                    });
+                    console.log("Image successfully loaded");
+                } else {
+                    console.error("Error:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+            } finally {
+                // Hide the loading indicator after the response is received
+                // loadingIndicator.style.display = 'none';
+                stopLoadingAnimation();
             }
-        } catch (error) {
-            console.error("Fetch error:", error);
         }
-
+    
         if (selectedPlanet) {
             selectedPlanet.customSize = newSize; // Store size
-            // selectedPlanet.customColor = color; // Store color
-            // selectedPlanet.customTemperature = temperature; // Store temperature
-
             console.log(`Saved data for ${selectedPlanet.name}: Size: ${newSize}, Color: ${color}, Temperature: ${temperature}, Type: ${types}`);
         }
-
+    
         if (!isNaN(newSize) && newSize > 0) {
             // Update the planet's scale
             selectedPlanet.scale.set(newSize, newSize, newSize);
-            // Optionally, you can also update the planet's geometry to keep the proportions accurate
+    
             const newGeometry = new THREE.SphereGeometry(newSize, 32, 32);
             const planetMaterial = selectedPlanet.material; // Keep the same material
             const newPlanetMesh = new THREE.Mesh(newGeometry, planetMaterial);
@@ -356,13 +396,12 @@ async function displayPlanetInfo(planetData) {
             newPlanetMesh = structuredClone(selectedPlanet);
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
-            const idx = planets.indexOf(selectedPlanet)
-            planets.splice(idx,1);
-            planets.splice(idx,0,newPlanetMesh);
-            // console.log(planets.length)
+            const idx = planets.indexOf(selectedPlanet);
+            planets.splice(idx, 1);
+            planets.splice(idx, 0, newPlanetMesh);
             selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
         }
-    };
+    };    
 }
 
 // Fetch planet data and store it in cache
