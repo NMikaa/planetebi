@@ -290,3 +290,25 @@ canvas { display: block; }
     border-radius: 5px;
     z-index: 9999;
 }
+
+.nav-buttons {
+    position: absolute;
+    bottom: 10px; /* Adjusts the position from the bottom */
+    left: 10px; /* Adjusts the position from the left */
+    display: flex;
+    gap: 10px; /* Space between buttons */
+}
+
+.nav-button {
+    padding: 10px 15px;
+    background-color: #007BFF; /* Button color */
+    color: white; /* Text color */
+    border: none;
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Change cursor on hover */
+    font-size: 16px; /* Font size */
+}
+
+.nav-button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
