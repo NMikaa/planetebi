@@ -88,13 +88,34 @@ function setupSystem(systemData) {
     planetSpeeds = [0.01];
 
     // Create star (the central "Sun")
-    const starTexture = textureLoader.load('assets/stars/star8.jpg');
+// Create an array of star texture paths
+const starTextures = [
+    'assets/stars/star1.jpg',
+    'assets/stars/star2.jpg',
+    'assets/stars/star3.jpg',
+    'assets/stars/star4.jpg',
+    'assets/stars/star5.jpg',
+    'assets/stars/star6.jpg',
+    'assets/stars/star7.jpg',
+    'assets/stars/star8.jpg'
+];
+
+    // Randomly select a star texture
+    const randomIndex = Math.floor(Math.random() * starTextures.length);
+    const starTexture = textureLoader.load(starTextures[randomIndex]);
+
+    // Calculate star radius
     const starRadius = systemData[0].star_radius * SOLAR_RADIUS_SCALING; // Star radius in Solar radii, scaled
+
+    // Create star geometry and material
     const starGeometry = new THREE.SphereGeometry(starRadius, 32, 32);
     const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture });
+
+    // Create the star mesh and add it to the scene
     currentStar = new THREE.Mesh(starGeometry, starMaterial);
     currentStar.name = systemData[0].star_name;
     scene.add(currentStar);
+
 
     const cameraDistance = starRadius * 6; // Set camera 6 times the star's radius away
     camera.position.set(0, 0, cameraDistance);
