@@ -23,6 +23,7 @@ const planetTextures = {
 const textureLoader = new THREE.TextureLoader();
 const backgroundTexture = textureLoader.load('assets/milkyway.jpg');
 
+
 // Create a large sphere for the background
 const backgroundGeometry = new THREE.SphereGeometry(500, 64, 64);
 const backgroundMaterial = new THREE.MeshBasicMaterial({ 
