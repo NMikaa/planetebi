@@ -1,19 +1,19 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from src_py.GptApi import PlanetAssistant  # Import the PlanetAssistant class
 import pandas as pd
 import requests
 from io import BytesIO
 from starlette.responses import StreamingResponse
 import motor.motor_asyncio  # For MongoDB
-from bson import ObjectId  # For working with MongoDB object IDs
 import openai
 import os
 from dotenv import load_dotenv, find_dotenv
 import cloudinary.uploader as uploader
 import cloudinary
 from typing import List
+from pydantic import BaseModel
+from src_py.GptAssistant import Chatbot
 
 cloudinary.config(
   cloud_name = "dqfgluj1j",
@@ -59,6 +59,9 @@ class FeaturesModel(BaseModel):
     types:  List[str]
     color: str
 
+class MessagePayload(BaseModel):
+    message: str
+    id: str = None
 # Helper function to save conversation
 async def save_conversation(user_input, bot_response):
     conversation_data = {
@@ -183,3 +186,32 @@ async def generate_image(features: FeaturesModel):
             raise HTTPException(status_code=500, detail="Image generation failed")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+  # Import the updated Chatbot class
+
+chatbot = Chatbot()
+
+
+
+@app.post("/message")
+def send_message(payload: MessagePayload):
+    """Send a message to the assistant and get the response."""
+    user_message = payload.message
+    if not user_message:
+        raise HTTPException(status_code=400, detail="Message not provided.")
+
+    if payload.id:
+        # Continue conversation with provided thread_id
+        thread_id = payload.id
+        chatbot.set_thread_id(thread_id)
+    else:
+        # Start a new conversation
+        thread_id = chatbot.start_new_conversation()
+
+    # Send the user message to the assistant
+    chatbot.send_message(user_message=user_message, thread_id=thread_id)
+
+    # Get the assistant's response
+    assistant_response = chatbot.get_response(thread_id=thread_id)[0].text.value
+
+    return {"assistant_response": assistant_response, "id": thread_id}
