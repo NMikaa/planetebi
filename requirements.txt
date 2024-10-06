@@ -6,3 +6,6 @@ pandas
 fastapi 
 uvicorn
 requests
+cloudinary==1.40.0
+pillow
+motor
