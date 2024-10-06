@@ -403,7 +403,7 @@ async function onClick(event) {
         return;
     }
 
-    if (intersects.length > 0) {
+    if (intersects.length > 0 && event.target == renderer.domElement) {
         isPlaying = true; // Toggle play state
         playButton.textContent = "❚❚"; // Change button to pause icon
         toggleAnimation(true); // Call your function to start or continue the animation
