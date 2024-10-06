@@ -238,7 +238,7 @@ async function displayPlanetInfo(planetData) {
 
         <div style="position: fixed; top: 20px; right: 20px; width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: rgba(0, 0, 0, 0.5); z-index: 999999;">
             <label for="planet-radius">Enter Planet Radius (km):</label>
-            <input type="text" id="planet-radius" placeholder="Radius (km)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+            <input type="range" id="size-range" min="1" max="15"  style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
 
             <label for="planet-color">Enter Planet Color:</label>
             <input type="text" id="planet-color" placeholder="Color (e.g., blue)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
@@ -271,77 +271,90 @@ async function displayPlanetInfo(planetData) {
     infoDiv.innerHTML = content;
 // Add event listener for the "Save" button
     const saveButton = document.getElementById('save-button');
-    saveButton.onclick = async () => {
+    saveButton.onclick = async (event) => {
         event.preventDefault();
-        const sizeInput = document.getElementById('planet-radius').value;
-        const newSize = parseFloat(sizeInput); // Parse the input as a float
-
+        const sizeInput = document.getElementById('size-range');
+        const newSize = parseFloat(sizeInput.value); // Parse the input as a float
+        console.log(newSize);
+    
         const color = document.getElementById('planet-color').value;
         const temperature = document.getElementById('planet-temperature').value;
-
+    
         const types = [];
         if (document.getElementById('cloudy').checked) types.push('Cloudy');
         if (document.getElementById('gas').checked) types.push('Gas');
         if (document.getElementById('rocky').checked) types.push('Rocky');
         if (document.getElementById('ice').checked) types.push('Ice');
-
+    
         const data = {
             color: color,
             temperature: temperature,
             types: types,
         };
-
-        try {
-            const response = await fetch("http://127.0.0.1:8000/generate_image/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({temperature: temperature, color: color, types: types}),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                const imageUrl = result.img_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
-                console.log(imageUrl); // Add this to see the exact image URL returned
-                // Now load the texture to the selected planet
-                const textureLoader = new THREE.TextureLoader();
-                textureLoader.load(imageUrl, (texture) => {
-                    selectedPlanet.material.map = texture;
-                    selectedPlanet.material.needsUpdate = true;  // To ensure Three.js updates the material with the new texture
+        if(types.length > 0 || color !== "" || temperature !== ""){
+            try {
+                // Show the loading indicator
+                // loadingIndicator.style.display = 'block';
+                startLoadingAnimation();
+    
+                const response = await fetch("http://127.0.0.1:8000/generate_image/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({temperature: temperature, color: color, types: types}),
                 });
-                console.log("gamevitane");
-            } else {
-                console.error("Error:", response.statusText);
+    
+                if (response.ok) {
+                    const result = await response.json();
+                    const imageUrl = result.img_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
+                    console.log(imageUrl); // Add this to see the exact image URL returned
+    
+                    // Now load the texture to the selected planet
+                    const textureLoader = new THREE.TextureLoader();
+                    textureLoader.load(imageUrl, (texture) => {
+                        selectedPlanet.material.map = texture;
+                        selectedPlanet.material.needsUpdate = true;  // To ensure Three.js updates the material with the new texture
+                    });
+                    console.log("Image successfully loaded");
+                } else {
+                    console.error("Error:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+            } finally {
+                // Hide the loading indicator after the response is received
+                // loadingIndicator.style.display = 'none';
+                stopLoadingAnimation();
             }
-        } catch (error) {
-            console.error("Fetch error:", error);
         }
-
+    
         if (selectedPlanet) {
             selectedPlanet.customSize = newSize; // Store size
-            // selectedPlanet.customColor = color; // Store color
-            // selectedPlanet.customTemperature = temperature; // Store temperature
-
             console.log(`Saved data for ${selectedPlanet.name}: Size: ${newSize}, Color: ${color}, Temperature: ${temperature}, Type: ${types}`);
         }
-
+        
         if (!isNaN(newSize) && newSize > 0) {
             // Update the planet's scale
             selectedPlanet.scale.set(newSize, newSize, newSize);
-            // Optionally, you can also update the planet's geometry to keep the proportions accurate
+        
+            // Create new geometry and mesh for the planet with the new size
             const newGeometry = new THREE.SphereGeometry(newSize, 32, 32);
             const planetMaterial = selectedPlanet.material; // Keep the same material
             const newPlanetMesh = new THREE.Mesh(newGeometry, planetMaterial);
             newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
             newPlanetMesh.name = selectedPlanet.name; // Preserve the name
-            newPlanetMesh = structuredClone(selectedPlanet);
+        
+            // Remove the old planet mesh and add the new planet mesh
             scene.remove(selectedPlanet); // Remove the old planet mesh
             scene.add(newPlanetMesh); // Add the new planet mesh
-            const idx = planets.indexOf(selectedPlanet)
-            planets.splice(idx,1);
-            planets.splice(idx,0,newPlanetMesh);
-            // console.log(planets.length)
+        
+            // Update the planets array
+            const idx = planets.indexOf(selectedPlanet);
+            if (idx !== -1) {
+                planets.splice(idx, 1, newPlanetMesh); // Replace the old planet with the new one
+            }
+        
             selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
         }
     };
@@ -452,19 +465,6 @@ function toggleAnimation(play) {
     }
 }
 
-        
-// window.addEventListener('keyup',(event)=>{
-//     if(event.code == "Space"){
-//         isPlaying = !isPlaying; // Toggle play state
-//         if (isPlaying) {
-//             playButton.textContent = "❚❚"; // Change button to pause icon
-//             toggleAnimation(true); // Call your function to start or continue the animation
-//         } else {
-//             playButton.textContent = "▶"; // Change button to play icon
-//             toggleAnimation(false); // Call your function to pause the animation
-//         }
-//     }
-// })
 
 function focusOnSelectedPlanet() {
     if (selectedPlanet) {
@@ -502,6 +502,7 @@ async function onClick(event) {
     }
     raycaster.setFromCamera(mouse, camera);
     const objectsToCheck = [...planets.map(p => p.mesh), currentStar];
+    console.log(objectsToCheck)
     const intersects = raycaster.intersectObjects(objectsToCheck);
     // Check if the click was on an input field or the save button
     const targetElement = event.target;
@@ -514,38 +515,237 @@ async function onClick(event) {
         isPlaying = true;
         playButton.textContent = "❚❚"; // Change button to pause icon
         toggleAnimation(true);
-
-        alert(intersects[0])
-
-        const planetName = intersects[0].object.name;
-        const planetData = getPlanetDataByName(planetName); // Use cached data
-        if (planetData) {
-            selectedPlanet = intersects[0].object;
+        let clickedObject = intersects[0].object;
+        if (clickedObject.name === currentStar.name) {
+            const starName = currentStar.name; // or `host_name` if you have this field
+            displayStarInfo(starName);
+            selectedPlanet = clickedObject;
             targetCameraPosition.set(
                 selectedPlanet.position.x + selectedPlanet.geometry.parameters.radius * 2,
                 selectedPlanet.position.y + selectedPlanet.geometry.parameters.radius * 2,
                 selectedPlanet.position.z + selectedPlanet.geometry.parameters.radius * 1
             ); // Zoom in
-            displayPlanetInfo(planetData);
-            console.log(planetData)
         } else {
-            console.log(`Planet named "${planetName}" not found.`);
+            const planetName = clickedObject.name;
+            const planetData = getPlanetDataByName(planetName); // Use cached data
+            if (planetData) {
+                selectedPlanet = clickedObject;
+                targetCameraPosition.set(
+                    selectedPlanet.position.x + selectedPlanet.geometry.parameters.radius * 2,
+                    selectedPlanet.position.y + selectedPlanet.geometry.parameters.radius * 2,
+                    selectedPlanet.position.z + selectedPlanet.geometry.parameters.radius * 1
+                ); // Zoom in
+                displayPlanetInfo(planetData);
+                console.log(planetData)
+            } else {
+                console.log(`Planet named "${planetName}" not found.`);
+            }
         }
     }
 }
 
-function getPlanetDataByName(planetName) {
-    // Flatten the values from the planetary systems map into a single array of planet objects
-    const allPlanets = Array.from(planetarySystems.values()).flat();
 
-    // Filter planets by name
-    const filteredPlanets = allPlanets.filter(
-        planet => planet.planet_name.toLowerCase() === planetName.toLowerCase()
-    );
+function displayStarInfo(starName){
+    const infoDiv = document.getElementById('planet-info');
+    const heading = document.querySelector('.heading');
+    const planetData = getStarByStarName(starName);
+    console.log(planetData)
+    // Update info content with the selected planet's data
+    let content = `
+        <strong>Star Name:</strong> ${planetData.star_name}<br>
+        <strong>Star Radius:</strong> ${planetData.star_radius} Earth radii<br>
+        <strong>Star Mass:</strong> ${planetData.star_mass} Earth masses<br>
+        <strong>Star Temperature:</strong> ${planetData.star_temperature} K<br>
+        
+
+        <div style="position: fixed; top: 20px; right: 20px; width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; background-color: rgba(0, 0, 0, 0.5); z-index: 999999;">
+            <label for="planet-radius">Enter Planet Radius (km):</label>
+            <input type="range" id="size-range" min="1" max="15"  style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+
+            <label for="planet-color">Enter Planet Color:</label>
+            <input type="text" id="planet-color" placeholder="Color (e.g., blue)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+
+            <label for="planet-temperature">Enter Planet Temperature (K):</label>
+            <input type="text" id="planet-temperature" placeholder="Temperature (K)" style="width: 150px; border-radius: 5px; border: 1px solid #ccc; background-color: transparent; color: white; padding: 5px; margin-bottom: 10px;"><br>
+
+            <label>Type:</label>
+            <span style="display: inline-block; margin-left: 10px;">
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="cloudy" value="Cloudy" style="width: 20px; height: 20px;"> Cloudy
+                </label>
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="gas" value="Gas" style="width: 20px; height: 20px;"> Gas
+                </label>
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="rocky" value="Rocky" style="width: 20px; height: 20px;"> Rocky
+                </label>
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" id="ice" value="Ice" style="width: 20px; height: 20px;"> Ice
+                </label>
+            </span>
+            
+            <br><br>
+
+            <button id="save-button" style="background-color: blue; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Save</button>
+        </div>
+        `;
+        
     
-    // Return the first match or null if no match is found
-    return filteredPlanets.length > 0 ? filteredPlanets[0] : null;
+    infoDiv.innerHTML = content;
+    const saveButton = document.getElementById('save-button');
+    let loadingAnimation; // Variable to hold the animation interval
+
+    
+    saveButton.onclick = async (event) => {
+        event.preventDefault();
+        const sizeInput = document.getElementById('size-range');
+        const newSize = parseFloat(sizeInput.value); // Parse the input as a float
+        console.log(newSize);
+    
+        const color = document.getElementById('planet-color').value;
+        const temperature = document.getElementById('planet-temperature').value;
+    
+        const types = [];
+        if (document.getElementById('cloudy').checked) types.push('Cloudy');
+        if (document.getElementById('gas').checked) types.push('Gas');
+        if (document.getElementById('rocky').checked) types.push('Rocky');
+        if (document.getElementById('ice').checked) types.push('Ice');
+    
+        const data = {
+            color: color,
+            temperature: temperature,
+            types: types,
+        };
+        if(types.length > 0 || color !== "" || temperature !== ""){
+            try {
+                // Show the loading indicator
+                // loadingIndicator.style.display = 'block';
+                startLoadingAnimation();
+    
+                const response = await fetch("http://127.0.0.1:8000/generate_image/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({temperature: temperature, color: color, types: types}),
+                });
+    
+                if (response.ok) {
+                    const result = await response.json();
+                    const imageUrl = result.img_url; // Assuming the server returns { "imageUrl": "link-to-image.png" }
+                    console.log(imageUrl); // Add this to see the exact image URL returned
+    
+                    // Now load the texture to the selected planet
+                    const textureLoader = new THREE.TextureLoader();
+                    textureLoader.load(imageUrl, (texture) => {
+                        selectedPlanet.material.map = texture;
+                        selectedPlanet.material.needsUpdate = true;  // To ensure Three.js updates the material with the new texture
+                    });
+                    console.log("Image successfully loaded");
+                } else {
+                    console.error("Error:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+            } finally {
+                // Hide the loading indicator after the response is received
+                // loadingIndicator.style.display = 'none';
+                stopLoadingAnimation();
+            }
+        }
+    
+        if (selectedPlanet) {
+            selectedPlanet.customSize = newSize; // Store size
+            console.log(`Saved data for ${selectedPlanet.name}: Size: ${newSize}, Color: ${color}, Temperature: ${temperature}, Type: ${types}`);
+        }
+        
+        if (!isNaN(newSize) && newSize > 0) {
+            // Update the planet's scale
+            selectedPlanet.scale.set(newSize, newSize, newSize);
+        
+            // Create new geometry and mesh for the planet with the new size
+            const newGeometry = new THREE.SphereGeometry(newSize, 32, 32);
+            const planetMaterial = selectedPlanet.material; // Keep the same material
+            const newPlanetMesh = new THREE.Mesh(newGeometry, planetMaterial);
+            newPlanetMesh.position.copy(selectedPlanet.position); // Keep the same position
+            newPlanetMesh.name = selectedPlanet.name; // Preserve the name
+        
+            // Remove the old planet mesh and add the new planet mesh
+            scene.remove(selectedPlanet); // Remove the old planet mesh
+            scene.add(newPlanetMesh); // Add the new planet mesh
+        
+            // Update the planets array
+            const idx = planets.indexOf(selectedPlanet);
+            if (idx !== -1) {
+                planets.splice(idx, 1, newPlanetMesh); // Replace the old planet with the new one
+            }
+        
+            selectedPlanet = newPlanetMesh; // Update the reference to the selected planet
+        }
+    };    
+
+    function startLoadingAnimation() {
+        let canv =  document.querySelector("canvas");
+        canv.style.opacity =  "0.7";
+        const loadingText = "Loading...";
+        let currentIndex = 0;
+
+        // Show the loading indicator
+        loadingIndicator.style.display = 'block';
+
+        // Set up an interval to update the text
+        loadingAnimation = setInterval(() => {
+            currentIndex = (currentIndex + 1) % (loadingText.length + 1); // Loop around after reaching full text
+
+            if (currentIndex <= loadingText.length) {
+                loadingIndicator.textContent = loadingText.substring(0, currentIndex); // Show progressively longer text
+            } else {
+                loadingIndicator.textContent = loadingText.substring(0, currentIndex - (loadingText.length + 1)); // Restart from "L"
+            }
+        }, 300); // Change the text every 300ms (adjust for faster or slower animation)
+    }
+
+    // Function to stop the "Loading..." animation
+    function stopLoadingAnimation() {
+        clearInterval(loadingAnimation);
+        let canv =  document.querySelector("canvas");
+        canv.style.opacity =  "1";
+        loadingIndicator.style.display = 'none'; // Hide the loading indicator
+    }
 }
+
+
+function getPlanetDataByName(planetName) {
+    // Flatten the planet data and find the first match
+    for (const planets of planetarySystems.values()) {
+        const planet = planets.find(
+            p => p.planet_name.toLowerCase() === planetName.toLowerCase()
+        );
+        if (planet) return planet; // Return early as soon as we find a match
+    }
+    
+    return null; 
+}
+
+
+function getStarByStarName(starName) {
+    // Retrieve the system data for the given star name
+    const systemData = planetarySystems.get(starName);
+
+    if (systemData && systemData.length > 0) {
+        // Extract star-related data from the first object (which contains the star data)
+        const { star_name, star_mass, star_temperature, star_radius, distance } = systemData[0];
+        
+        // Return the star data as an object
+        return { star_name, star_mass, star_temperature, star_radius, distance };
+    }
+
+    // Return null if the star is not found
+    return null;
+}
+
+
+
 
 
 function onMouseMove(event) {
@@ -562,7 +762,7 @@ function resetCamera() {
     const infoDiv = document.getElementById('planet-info');
     const title = document.querySelector('.heading');
     infoDiv.textContent = "Click on a planet to see its information";
-    title.textContent = 'Solar System';
+    title.textContent = 'Exoplanetary System';
     selectedPlanet = null;
 
     // Dynamically calculate a safe camera distance based on the star's radius
