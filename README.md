@@ -18,7 +18,7 @@
    Navigate to the directory where your `chatbotapp.py` file is located (in this case Chatbot) and run:
    
    ```bash
-   uvicorn src_py.chatbotapp:app --reload
+   uvicorn src_py.app:app --reload
    ```
 
    The server will start at `http://localhost:8000`.
