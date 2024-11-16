@@ -15,9 +15,9 @@ from pydantic import BaseModel
 from src_py.GptAssistant import Chatbot
 
 cloudinary.config(
-  cloud_name = "dqfgluj1j",
-  api_key = "171765552355944",
-  api_secret = "jvvqDYqUNO0rJsvU-ruwunonuBs",
+  cloud_name = "api",
+  api_key = "api",
+  api_secret = "api",
   secure = True
 )
 
